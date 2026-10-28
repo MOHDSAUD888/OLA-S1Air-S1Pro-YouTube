@@ -6,7 +6,7 @@ scooter, over the local network, with no flashing and no partition writes.
 
 **What you get:** a root shell on the dashboard over IPv6, a one-click script that
 opens Android Settings on the scooter, the full CAN map, the HMI architecture, and
-a repeatable method for doing the same on your own unit.
+a repeatable method for doing the same on your own unit Without Touching the scooty.
 
 **No keys, passwords, tokens or personal data are in this repo.** You make your
 own adb key. Nothing here can impersonate a vehicle or a cloud account.
