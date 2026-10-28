@@ -11,6 +11,9 @@ a repeatable method for doing the same on your own unit Without Touching the sco
 **No keys, passwords, tokens or personal data are in this repo.** You make your
 own adb key. Nothing here can impersonate a vehicle or a cloud account.
 
+> New here? The full walkthrough is [How to do it yourself — zero to real
+> adb](#how-to-do-it-yourself--zero-to-real-adb).
+
 ---
 
 ## The short version
@@ -74,6 +77,334 @@ py scripts\ola.py screenshot --ipv6 ... shot.png
 ```
 
 `ola.py --help` lists everything.
+
+---
+
+## How to do it yourself — zero to real adb
+
+This is the whole path, in order. Every command is real. Nothing is skipped.
+
+You go from "I have a scooter and a laptop" to "adb says `device` and I can run
+`scrcpy`". No flashing, no partition writes, no Ola account, no key from anyone
+else.
+
+```
+Step 1  find the address
+Step 2  prove root over IPv6
+Step 3  run commands
+Step 4  open Settings (optional, proves intents work)
+Step 5  real adb by swapping the key file
+```
+
+### What you need
+
+| Thing | Why | Check |
+|---|---|---|
+| The scooter, awake | asleep = no network, no data | press the red button |
+| Same Wi-Fi | the daemon is on the LAN | `ping` works |
+| IPv6 on your PC's Wi-Fi | the whole trick is IPv6 | step 1 |
+| Python 3 | runs `ola.py` | `py --version` |
+| `grpcio` | the only Python package | `py -m pip install -r scripts\requirements.txt` |
+| adb | only needed at step 5 | `adb version` |
+| scrcpy | optional, step 5 | `scrcpy --version` |
+
+Windows, Linux and macOS all work. The commands below are PowerShell; the Linux
+equivalents are in the docs.
+
+Where a command shows `--ipv6 ...`, that `...` means your address plus scope:
+
+```powershell
+--ipv6 fe80::1234:5678:9abc:def0 --scope 6
+```
+
+Write it out in full when you run it. It is shortened here only for width.
+
+---
+
+### Step 1 — Find the scooter's IPv6 address
+
+The easy way:
+
+```powershell
+.\scripts\find-scooter.ps1
+```
+
+It pings the IPv6 neighbourhood and tests port 50005 on every neighbour. The one
+marked `OPEN` is your scooter.
+
+The manual way:
+
+```powershell
+# IPv6 must be on for the Wi-Fi adapter (admin PowerShell, once)
+Enable-NetAdapterBinding -Name "Wi-Fi" -ComponentID ms_tcpip6
+
+# ask every IPv6 host on the link to answer
+ping -6 -n 2 ff02::1%6
+
+# read the neighbour table
+Get-NetNeighbor -AddressFamily IPv6 | Format-Table IPAddress,LinkLayerAddress,InterfaceIndex
+```
+
+You want a `fe80::...` address. The `InterfaceIndex` next to it is your **scope**.
+Write the pair down:
+
+```
+address  fe80::1234:5678:9abc:def0
+scope    6
+```
+
+Linux/macOS:
+
+```sh
+ping -6 -c 2 ff02::1%wlan0
+ip -6 neigh
+```
+
+Why link-local: the address is built from the MAC (EUI-64), so it does not change
+when DHCP hands out a new IPv4 lease. It is the stable way to find the unit.
+
+---
+
+### Step 2 — Prove root over IPv6
+
+```powershell
+py scripts\ola.py info --ipv6 fe80::1234:5678:9abc:def0 --scope 6
+```
+
+Expected, roughly:
+
+```
+uid            0
+android        13
+build          ...
+patch          2023-09-05
+model          ...
+scooter mode   cust
+selinux        Permissive
+uptime         ...
+```
+
+The important line is **`uid  0`**. That is root, with no password, over plain
+gRPC on port 50005.
+
+If it fails:
+
+| Message | Meaning | Fix |
+|---|---|---|
+| `No answer ... after 8s` | wrong address, wrong scope, or asleep | re-run step 1, wake the scooter |
+| `This is a link-local address` | scope missing | add `--scope 6` or `%6` |
+| `Missing grpcio` | package not installed | `py -m pip install grpcio` |
+| Timeout but `ping` works | port blocked | you are on IPv4, not IPv6 |
+
+IPv4 will **not** work in customer mode. The firewall drops 50005 there. IPv6 is
+the way in.
+
+---
+
+### Step 3 — Run commands
+
+`ola.py shell` wraps your command in `sh -c` for you, so spaces, pipes and quotes
+are fine:
+
+```powershell
+py scripts\ola.py shell --ipv6 fe80::1234:5678:9abc:def0 --scope 6 "id; getprop ro.build.version.release"
+py scripts\ola.py shell --ipv6 ... "ls -l /data/vendor/ola"
+py scripts\ola.py shell --ipv6 ... "netstat -tlnp | head -20"
+```
+
+Useful things you can do right away:
+
+```powershell
+py scripts\ola.py screenshot --ipv6 ... shot.png      # what is on screen
+py scripts\ola.py top        --ipv6 ...               # which activity is in front
+py scripts\ola.py wake       --ipv6 ...               # turn the panel on
+py scripts\ola.py home       --ipv6 ...               # back to the dash
+py scripts\ola.py diag       --ipv6 ...               # Ola technician app
+py scripts\ola.py push       --ipv6 ... .\file.bin /data/local/tmp/file.bin
+py scripts\ola.py pull       --ipv6 ... /data/local/tmp/file.bin .\file.bin
+```
+
+**The one rule that saves hours:** if a command has flags with values, quotes,
+pipes or redirection, put it in a `.sh` file, push it, and run the file.
+
+```powershell
+# write mycmd.sh locally, then:
+py scripts\ola.py push --ipv6 ... .\mycmd.sh /data/local/tmp/mycmd.sh
+py scripts\ola.py shell --ipv6 ... "chmod 755 /data/local/tmp/mycmd.sh"
+py scripts\ola.py shell --ipv6 ... "sh /data/local/tmp/mycmd.sh"
+```
+
+The daemon itself is not a shell: it splits its input on whitespace and `exec`s
+it. `ola.py shell` hides that by wrapping your command in `sh -c` and replacing
+spaces with `${IFS}`. That is why normal commands work.
+
+`--raw` sends your string with no wrapper, straight at the splitter. That is why
+`mount --bind` fails with `--raw` and works from a pushed file.
+
+---
+
+### Step 4 — Open Android Settings (optional)
+
+```powershell
+.\scripts\open-settings.ps1 -IPv6 fe80::1234:5678:9abc:def0
+```
+
+The scooter's screen shows the real Android Settings app. Back to the dash:
+
+```powershell
+py scripts\ola.py home --ipv6 ...
+```
+
+This step is optional, but do it once: it proves intents work, which is the same
+mechanism used later to restart apps. See [doc 04](docs/04-open-settings.md).
+
+---
+
+### Step 5 — Real adb, by changing the keys
+
+adb is **not** needed for anything above. This step is only for `scrcpy`,
+Android Studio, `logcat`, `dumpsys`, and fast file transfers.
+
+#### 5.1 — Why plain adb fails
+
+Flipping the scooter out of customer mode is not enough. Ola patched `adbd` so it
+reads a different key file depending on the mode:
+
+| mode | key file adbd trusts |
+|---|---|
+| `cust` | none — it refuses before loading a key |
+| `serv` | `/adbkeymoveos3_pub_prod` |
+| `mfg` | `/adb_keys` |
+
+Both files are baked into the read-only system image and hold Ola's build keys.
+Your key in `/data/misc/adb/adb_keys` is ignored. That is why you get
+`failed to authenticate` even when your key looks trusted.
+
+The fix is a **bind mount**: make your own public key appear at the path adbd
+actually reads. It lives in RAM only and disappears on reboot.
+
+#### 5.2 — Make your own key
+
+Use your own key. Never use someone else's, and never commit it.
+
+```powershell
+# makes %USERPROFILE%\.android\adbkey and adbkey.pub
+adb keygen "$env:USERPROFILE\.android\adbkey"
+```
+
+If you already have `~/.android/adbkey.pub`, skip this. It is the same key adb
+uses everywhere.
+
+#### 5.3 — Push the public key
+
+Only the **public** key goes to the scooter. The private key stays on your PC.
+
+```powershell
+py scripts\ola.py push --ipv6 ... "$env:USERPROFILE\.android\adbkey.pub" /data/local/tmp/adb_keys_mine
+py scripts\ola.py shell --ipv6 ... "chmod 644 /data/local/tmp/adb_keys_mine"
+```
+
+#### 5.4 — Switch the mode
+
+This opens port 5555 and restarts adbd. It does not reboot, does not touch CAN,
+and does not change any vehicle setting.
+
+```powershell
+py scripts\ola.py shell --ipv6 ... "setprop persist.ola.security.scootermode serv"
+```
+
+Wait two seconds. `serv` uses `/adbkeymoveos3_pub_prod`. Use `mfg` if you prefer
+`/adb_keys` — both behave the same on the network.
+
+> This is a `persist.` property, so it **survives a reboot**. Remember the undo
+> in 5.7.
+
+#### 5.5 — Bind your key over the factory key
+
+`mount --bind` cannot be sent inline — the whitespace splitter mangles it. Put it
+in a file:
+
+```sh
+#!/system/bin/sh
+MODE="$1"
+if [ "$MODE" = "mfg" ]; then T=/adb_keys; else T=/adbkeymoveos3_pub_prod; fi
+mount | grep -q " $T " && umount "$T"
+mount --bind /data/local/tmp/adb_keys_mine "$T" || exit 1
+echo "bound $T"
+```
+
+Save it as `bind_key.sh`, then:
+
+```powershell
+py scripts\ola.py push --ipv6 ... .\bind_key.sh /data/local/tmp/bind_key.sh
+py scripts\ola.py shell --ipv6 ... "chmod 755 /data/local/tmp/bind_key.sh"
+py scripts\ola.py shell --ipv6 ... "sh /data/local/tmp/bind_key.sh serv"
+```
+
+You should see `bound /adbkeymoveos3_pub_prod`.
+
+#### 5.6 — Connect
+
+```powershell
+adb connect "[fe80::1234:5678:9abc:def0%6]:5555"
+adb devices -l
+```
+
+`device` means you are in. `unauthorized` or `failed to authenticate` means the
+mount is not in place, or you used the wrong mode for the file you mounted.
+
+```powershell
+adb shell id
+```
+
+That returns **uid 2000 (shell)**, not root. adb is for convenience; the gRPC
+channel is still the root path. For `scrcpy` that is all you need:
+
+```powershell
+scrcpy --tcpip --max-size 800
+```
+
+> **Never restart adbd while scrcpy is connected.** You will lose the stream and
+> sometimes the encoder. Reconnect instead.
+
+#### 5.7 — Undo
+
+```powershell
+py scripts\ola.py shell --ipv6 ... "umount /adbkeymoveos3_pub_prod"
+py scripts\ola.py shell --ipv6 ... "umount /adb_keys"
+py scripts\ola.py shell --ipv6 ... "setprop persist.ola.security.scootermode cust"
+adb disconnect "[fe80::1234:5678:9abc:def0%6]:5555"
+```
+
+A reboot also clears the bind mount, but **not** the `persist.` property — set it
+back to `cust` if you want the IPv4 ports closed again.
+
+#### All of step 5 in one command
+
+```powershell
+.\scripts\unlock-adb.ps1 -IPv6 fe80::1234:5678:9abc:def0
+.\scripts\unlock-adb.ps1 -IPv6 fe80::1234:5678:9abc:def0 -Undo
+```
+
+The script does 5.2 to 5.6 in order, including finding your scope. Use `-Mode mfg`
+for the other key path, `-Adb <path>` if adb is not on `PATH`.
+
+---
+
+### You are done when
+
+```powershell
+py scripts\ola.py info --ipv6 ...   # uid 0
+adb devices -l                      # device
+scrcpy --tcpip                      # mirror works
+```
+
+At that point you have root on the dash, a normal adb connection, and a screen
+mirror. Everything else in this repo builds on those three.
+
+Full detail: [doc 02](docs/02-root-over-ipv6.md) for the channel,
+[doc 03](docs/03-adb-and-full-access.md) for adb, [doc 10](docs/10-how-to-do-rea.md)
+for the method on a different target.
 
 ---
 
