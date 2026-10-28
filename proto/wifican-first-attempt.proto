@@ -1,0 +1,64 @@
+// wifican-first-attempt.proto -- KEPT FOR HISTORY ONLY. THIS FILE IS WRONG.
+//
+// This was the first hand-rebuilt guess at the service, made before the real
+// descriptor was pulled out of the binary. It lists 17 methods instead of 40
+// and invents message types that do not exist (GenericReply, GenericRequest,
+// Empty, AdbCommandRequest). It happened to work for ExecuteADBCommand only
+// because that method's field number and wire type matched the guess.
+//
+// Do not use it. Use wifican.proto in this same folder.
+
+syntax = "proto3";
+ 
+package wifican;
+ 
+service WifiCanRpc {
+  rpc InitConnection (Empty) returns (GenericReply);
+  rpc GetSwVersion (Empty) returns (GenericReply);
+  rpc GetAospVersion (Empty) returns (GenericReply);
+ 
+  rpc ConfigUpdate (GenericRequest) returns (GenericReply);
+  rpc ProvisionVin (GenericRequest) returns (GenericReply);
+ 
+  rpc GenerateCerts (GenericRequest) returns (GenericReply);
+  rpc ValidateCerts (GenericRequest) returns (GenericReply);
+ 
+  rpc ReadCanFrame (GenericRequest) returns (GenericReply);
+  rpc WriteCanFrame (GenericRequest) returns (GenericReply);
+ 
+  rpc ReadCanStream (GenericRequest) returns (stream GenericReply);
+ 
+  rpc RemoteRunTestCmd (GenericRequest) returns (GenericReply);
+  rpc RunSystemTestCmd (GenericRequest) returns (GenericReply);
+  rpc ExecuteADBCommand (AdbCommandRequest) returns (GenericReply);
+  rpc GetEcosDynoFlags (Empty) returns (GenericReply);
+  rpc TechPackUpdate (GenericRequest) returns (GenericReply);
+  rpc GetVehicleOperationMode(GenericRequest)
+    returns (VehicleOperationMode);
+  rpc SetVehicleOperationMode(VehicleOperationMode)
+    returns (GenericReply);
+}
+ 
+message Empty {}
+ 
+message VehicleOperationMode {
+    int32 cur_mode = 1;
+    int64 modified_ts = 2;
+    string modified_ts_str = 3;
+    string modified_by = 4;
+}
+ 
+message GenericRequest {
+  bytes data = 1;
+}
+ 
+message GenericReply {
+  int32 status = 1;
+  string message = 2;
+  bytes data = 3;
+}
+ 
+message AdbCommandRequest {
+  string command = 1;
+}
+ 

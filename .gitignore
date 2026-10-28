@@ -1,0 +1,45 @@
+# Secrets and personal data — never commit these
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+adbkey
+adbkey.pub
+*.log
+.env
+.env.*
+secrets/
+private/
+
+# Large device dumps
+*.apk
+*.apks
+*.bin
+*.so
+*.img
+*.raw
+*.tar
+*.tar.gz
+*.zip
+*.enc
+*.kzb
+
+# Local captures
+shots/
+captures/
+*.png
+*.mp4
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
