@@ -439,6 +439,44 @@ what you will read here — including why the dash cannot unlock a sleeping scoo
 
 ---
 
+## The Android app
+
+Five screens, one APK, one address to type. Source in [`app/`](app).
+
+| Screen | What it does |
+|---|---|
+| Battery | pack health, all 14 cells, motor, `0x683` safety flags — live from CAN |
+| Settings | opens the real Android screens on the dash (`am start`, never a tap) |
+| ADB | a root shell over gRPC, pipes and flags work |
+| Mode | Customer / Service, plus the vehicle mode read-only |
+| TechPack | `TechPackUpdate` demo — may do nothing, see doc 12 |
+
+You type the scooter's **IPv4**; the app dials **IPv6**. That is not cosmetic:
+in customer mode the scooter drops TCP 50005 and 5555 over IPv4, so an IPv4
+session kills itself the moment you switch. The IPv6 address is found from a MAC
+address with EUI-64 — measured, not guessed:
+
+```
+3a:2b:7c:06:5d:a8   →   fe80::382b:7cff:fe06:5da8
+```
+
+Whose MAC depends on where you are: none at all when the app runs on the scooter
+itself (it uses `::1`), the BSSID when you joined the scooter's hotspot, or the
+scooter's ARP entry when both of you are on some other Wi-Fi. Only if all three
+fail does it drop to IPv4, and then mode switching is disabled.
+
+Build:
+
+```powershell
+cd ola-s1-rea\app
+.\gradlew.bat :app:assembleDebug
+```
+
+Full detail, including why each screen is written the way it is:
+[doc 12](docs/12-android-app.md).
+
+---
+
 ## Docs
 
 | # | File | What it covers |
@@ -454,6 +492,7 @@ what you will read here — including why the dash cannot unlock a sleeping scoo
 | 09 | [Security findings](docs/09-security-findings.md) | The clean list, with severity and proof |
 | 10 | [How to do REA](docs/10-how-to-do-rea.md) | The method, tools, and traps |
 | 11 | [Glossary](docs/11-glossary.md) | Plain-word definitions |
+| 12 | [Android app](docs/12-android-app.md) | The five-screen APK, IPv4 in / IPv6 out, build |
 
 Scripts:
 

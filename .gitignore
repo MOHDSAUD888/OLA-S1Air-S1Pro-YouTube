@@ -29,6 +29,7 @@ private/
 # Local captures
 shots/
 captures/
+_cloud/
 *.png
 *.mp4
 
@@ -37,6 +38,15 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# Gradle / Android build output
+.gradle/
+build/
+local.properties
+keystore.properties
+*.iml
+.cxx/
+.navigation/
 
 # Editors / OS
 .vscode/
