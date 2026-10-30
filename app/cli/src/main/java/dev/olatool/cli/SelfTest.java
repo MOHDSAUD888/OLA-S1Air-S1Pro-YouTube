@@ -211,6 +211,7 @@ public final class SelfTest {
         eq("trickle soh missing", true, Double.isNaN(trickle.soh));
         eq("trickle soh not stale", false,
                 trickle.sohStale(System.currentTimeMillis(), 6000));
+        eq("trickle panel signals", 0, PanelData.from(trickle, live).signalCount());
 
         // 0x150 BMS00_Parameter_3: Pack_SoH is byte 5.
         byte[] bms = new byte[8];
@@ -229,6 +230,7 @@ public final class SelfTest {
         eq("panel soh timestamp", pack.sohAt, panel.sohAt);
         eq("panel soh fresh", false,
                 panel.sohStale(System.currentTimeMillis(), 6000));
+        eq("panel counts seen signals", 1, panel.signalCount());
 
         live.reset();
         eq("reset frames", 0L, live.snapshot().frames);

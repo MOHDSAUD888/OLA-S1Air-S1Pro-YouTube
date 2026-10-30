@@ -190,6 +190,21 @@ public final class PanelData {
     }
 
     /**
+     * How many of the panel signals have actually been seen. The map is
+     * pre-filled with every key, so its size is a constant and must not be
+     * shown as a live signal count.
+     */
+    public int signalCount() {
+        int n = 0;
+        for (double v : signals.values()) {
+            if (!Double.isNaN(v)) {
+                n++;
+            }
+        }
+        return n;
+    }
+
+    /**
      * True when only the telematics sleep trickle is arriving. Those frames
      * keep {@link #lastFrameMs} fresh without carrying any vehicle data.
      */

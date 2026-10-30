@@ -347,7 +347,7 @@ final class DiagnosticsTab implements Tab, Bus.Listener {
             statusTitle.setTextColor(Ui.BAD);
         }
         Ui.set(statusSub, d.frames + " frames  \u00B7  " + d.pps
-                + " pkt/s  \u00B7  " + d.signals.size() + " signals");
+                + " pkt/s  \u00B7  " + d.signalCount() + " signals");
         if (d.frames == 0) {
             Ui.pill(statusPill, "WAITING", Ui.DIM);
         } else if (stale) {
