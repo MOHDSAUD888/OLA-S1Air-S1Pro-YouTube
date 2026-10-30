@@ -44,6 +44,16 @@ public final class Bus {
 
     private static final long TICK_MS = 100;
 
+    /** Wait this long before opening a new stream after the old one ended. */
+    private static final long RETRY_MS = 2000;
+
+    /**
+     * A stream that is open but silent for this long is reopened. The daemon
+     * sometimes keeps the call alive after the scooter sleeps, so waiting for
+     * it to end is not enough.
+     */
+    private static final long SILENCE_MS = 15000;
+
     private final Context context;
     private final Conn conn;
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -55,6 +65,18 @@ public final class Bus {
     private volatile String state = "idle";
     private volatile boolean running;
     private volatile boolean loading;
+
+    /**
+     * When the last stream ended, the ticker waits until this time before
+     * opening another one. Without it a dead stream would never come back.
+     */
+    private volatile long retryAt;
+
+    /** Bumped every time a stream is opened or closed, so old callbacks are ignored. */
+    private int generation;
+
+    /** When the current stream was opened; used to retry if no frame ever arrives. */
+    private volatile long openedAt;
 
     private final Set<String> simulated = new LinkedHashSet<>();
 
@@ -201,25 +223,44 @@ public final class Bus {
         }
         closeStream();
         l.reset();
+        final int gen = generation;
         streamedOn = rpc;
+        retryAt = 0;
+        openedAt = System.currentTimeMillis();
         state = "streaming";
         cancel = rpc.streamCanFrames(new Rpc.FrameSink() {
             @Override
             public void frame(Can.Frame frame) {
                 Live target = live;
-                if (target != null) {
+                if (target == null) {
+                    return;
+                }
+                try {
                     target.onFrame(frame);
+                } catch (RuntimeException e) {
+                    // One frame the decoder cannot handle must not kill the
+                    // whole stream and leave every panel frozen.
                 }
             }
 
             @Override
             public void ended(String reason) {
-                state = "stream ended: " + reason;
+                synchronized (Bus.this) {
+                    if (gen != generation) {
+                        // A newer stream is already running; ignore this one.
+                        return;
+                    }
+                    cancel = null;
+                    streamedOn = null;
+                    retryAt = System.currentTimeMillis() + RETRY_MS;
+                    state = "stream ended: " + reason + " (retrying)";
+                }
             }
         });
     }
 
     private synchronized void closeStream() {
+        generation++;
         Rpc.Cancel old = cancel;
         cancel = null;
         streamedOn = null;
@@ -234,20 +275,37 @@ public final class Bus {
             if (!running) {
                 return;
             }
+            Live l = live;
+            Live.Snapshot snapshot = l == null ? null : l.snapshot();
+            long now = System.currentTimeMillis();
+
             if (!conn.ready()) {
                 if (cancel != null) {
                     closeStream();
                     state = "not connected";
                 }
-            } else if (conn.rpc() != streamedOn) {
+            } else if (conn.rpc() != streamedOn && now >= retryAt) {
                 open();
+            } else if (streamedOn != null && snapshot != null
+                    && (snapshot.lastFrameMs > 0
+                            ? now - snapshot.lastFrameMs > SILENCE_MS
+                            : now - openedAt > SILENCE_MS)) {
+                // The call is still open but the scooter went quiet, or it never
+                // sent a first frame. Reopen so data comes back when it wakes.
+                state = "no frames for " + (SILENCE_MS / 1000) + " s, reopening";
+                closeStream();
+                retryAt = now + RETRY_MS;
             }
 
-            Live l = live;
-            if (l != null) {
-                Live.Snapshot snapshot = l.snapshot();
+            if (snapshot != null) {
                 for (Listener listener : listeners) {
-                    listener.onTick(snapshot);
+                    try {
+                        listener.onTick(snapshot);
+                    } catch (RuntimeException e) {
+                        // A broken screen must not stop the ticker for every
+                        // other screen, which would look like frozen old data.
+                        android.util.Log.w("Bus", "listener failed", e);
+                    }
                 }
             }
             ui.postDelayed(this, TICK_MS);
