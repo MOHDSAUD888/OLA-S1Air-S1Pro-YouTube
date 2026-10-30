@@ -15,7 +15,7 @@ Dev         connection state and local-only switches
 ```
 
 Source is in [`app/`](../app). Nothing in it is special: it is the same
-`ExecuteADBCommand` and `ReadCanStream` calls that `scripts/ola.py` makes, with a
+`ExecuteADBCommand` and CAN calls that `scripts/ola.py` makes, with a
 UI on top.
 
 The signal and fault tables are data files from Axiom, which is Apache-2.0. See
@@ -80,10 +80,12 @@ would cut the connection.
 
 ## One stream, nine screens
 
-The daemon can push frames with `ReadCanStream`. That stream can only be opened
-once: if two screens opened their own, they would steal frames from each other
-and the bus would look half dead. So there is exactly one stream for the whole
-app, owned by `Bus.java`.
+The daemon can push frames with `CanDumpStream`, the unfiltered `vcan0` tap.
+`ReadCanStream` looks equivalent but returned zero frames on this unit even
+after `Init`, so the app uses the dump tap. That stream can only be opened once:
+if two screens opened their own, they would steal frames from each other and the
+bus would look half dead. So there is exactly one stream for the whole app,
+owned by `Bus.java`.
 
 `Bus` decodes every frame into one `Live` and hands the same snapshot to the
 screens ten times a second. A screen only attaches a listener while it is
@@ -95,9 +97,10 @@ The stream has **no deadline** and is cancelled with a gRPC
 daemon; a cancel is clean. The unary `ReadCanFrame` loop is kept as a fallback
 in the desktop harness, not used by the app.
 
-This is why the app reads `ReadCanStream` where an earlier version of this page
-said never to: a stream with no deadline, cancelled properly, is safe, and it is
-the only way nine screens can share one bus.
+This is why the app reads a stream where an earlier version of this page said
+never to: a stream with no deadline, cancelled properly, is safe, and it is the
+only way nine screens can share one bus. The tap is `CanDumpStream`, because
+`ReadCanStream` stayed silent here.
 
 ### Battery
 
@@ -364,7 +367,7 @@ dash. Treat them as untested on hardware until they are.
   `java.util` desugaring on old releases; that is configured.
 - **No AndroidX.** Nine screens and one gRPC client do not need it, so the app
   uses the platform theme and stays small.
-- **One stream, shared.** `Bus` owns the single `ReadCanStream`; screens attach
+- **One stream, shared.** `Bus` owns the single `CanDumpStream`; screens attach
   and detach listeners instead of opening their own. Opening a second stream
   would split the frames.
 - **The app cannot wake the vehicle.** If the bus is silent, the pack is asleep:

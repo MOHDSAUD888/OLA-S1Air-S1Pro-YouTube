@@ -455,7 +455,7 @@ Nine screens, one APK, one address to type. Source in [`app/`](app).
 | TechPack | `TechPackUpdate` demo — may do nothing, see doc 12 |
 | Dev | connection state and local-only switches |
 
-All the live screens read one shared `ReadCanStream` owned by `Bus.java`, fanned
+All the live screens read one shared `CanDumpStream` owned by `Bus.java`, fanned
 out ten times a second. A screen only listens while it is visible, so switching
 tabs does not restart or split the stream.
 
