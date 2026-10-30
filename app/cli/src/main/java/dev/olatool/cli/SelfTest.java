@@ -16,7 +16,9 @@ import dev.olatool.core.Dbc;
 import dev.olatool.core.Faults;
 import dev.olatool.core.Json;
 import dev.olatool.core.Live;
+import dev.olatool.core.Msg;
 import dev.olatool.core.Provision;
+import dev.olatool.core.VehicleInfo;
 
 /**
  * Offline checks for the parts that do not need a scooter.
@@ -41,6 +43,7 @@ public final class SelfTest {
         faults();
         live();
         provision();
+        vehicleInfo();
 
         System.out.println();
         System.out.println(passed + " passed, " + failed + " failed");
@@ -224,6 +227,37 @@ public final class SelfTest {
         eq("undo unmounts", true, undo.contains("umount /adb_keys"));
         eq("undo restores", true, undo.contains("scootermode 'serv'"));
         eq("undo default", true, Provision.undoScript(null).contains("scootermode 'cust'"));
+    }
+
+    // ---------------------------------------------------------- vehicle info
+
+    private static void vehicleInfo() {
+        String vin = "TESTVIN0000000000";
+        eq("vin from json", vin,
+                VehicleInfo.vinFromManifest("{\"VIN\":\"" + vin + "\"}"));
+        eq("vin from regex", vin,
+                VehicleInfo.vinFromManifest("not json \"VIN\":\"" + vin + "\""));
+        eq("reg indian", "KA 01 AB 1234", VehicleInfo.formatRegistration("ka01ab1234"));
+        eq("reg bharat", "22 BH 1234 A", VehicleInfo.formatRegistration("22BH1234A"));
+        eq("reg blank", "", VehicleInfo.formatRegistration(""));
+        eq("uptime days", "76 hrs",
+                VehicleInfo.uptimeHours(" 10:20:30 up 3 days,  4:05,  1 user"));
+        eq("uptime hours", "4 hrs",
+                VehicleInfo.uptimeHours(" 10:20:30 up 4:05,  1 user"));
+        eq("uptime minutes", "0 hrs",
+                VehicleInfo.uptimeHours(" 10:20:30 up 12 min,  1 user"));
+
+        VehicleInfo variant = VehicleInfo.fromVariantXml(
+                "<string name=\"com.olaelectric.dataanalyser.VEHICLE_VARIANT\">"
+                        + "S1_Pro_Gen_2_3.97_kwh</string>");
+        eq("variant model", "S1 Pro", variant.model);
+        eq("variant generation", "Gen 2", variant.generation);
+        eq("variant battery", "3.97 kWh", variant.batteryVariant);
+
+        eq("sw line prefix", "MoveOS 1.2.3",
+                VehicleInfo.swLine(new Msg.Response(1, "1.2.3\n")));
+        eq("sw line kept", "MoveOS 2.0",
+                VehicleInfo.swLine(new Msg.Response(1, "MoveOS 2.0\n")));
     }
 
     // ---------------------------------------------------------------- helpers

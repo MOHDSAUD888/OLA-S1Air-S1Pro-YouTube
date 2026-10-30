@@ -326,6 +326,15 @@ public final class Rpc implements Closeable {
         return vehicleIdentifiers(DEFAULT_TIMEOUT_MS);
     }
 
+    /** GetSwVersion returns Response{status,status_msg}. */
+    public Msg.Response swVersion(long timeoutMs) {
+        return Msg.response(call("GetSwVersion", new byte[0], timeoutMs));
+    }
+
+    public Msg.Response swVersion() {
+        return swVersion(DEFAULT_TIMEOUT_MS);
+    }
+
     /** Network mode: the {@code cust} / {@code serv} property. Reversible. */
     public String networkMode() {
         return getprop("persist.ola.security.scootermode", 10_000);

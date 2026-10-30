@@ -31,8 +31,8 @@ public final class MainActivity extends Activity {
     private static final String PREFS = "ola";
     private static final String KEY_ADDRESS = "address";
     private static final String[] TAB_NAMES = {
-            "Battery", "Signals", "Faults", "Log", "Settings",
-            "ADB", "Mode", "TechPack", "Dev"
+            "Vehicle", "Diagnostics", "Battery", "Signals", "Faults", "Log",
+            "Settings", "ADB", "Mode", "TechPack", "Dev"
     };
 
     private final Conn conn = new Conn();
@@ -54,15 +54,17 @@ public final class MainActivity extends Activity {
 
         bus = new Bus(this, conn);
 
-        tabs[0] = new BatteryTab(this, conn, bus);
-        tabs[1] = new SignalsTab(this, conn, bus);
-        tabs[2] = new FaultsTab(this, conn, bus);
-        tabs[3] = new LogTab(this, conn, bus);
-        tabs[4] = new SettingsTab(this, conn);
-        tabs[5] = new AdbTab(this, conn);
-        tabs[6] = new ModeTab(this, conn);
-        tabs[7] = new TechPackTab(this, conn);
-        tabs[8] = new DevTab(this, conn, bus);
+        tabs[0] = new VehicleTab(this, conn, bus);
+        tabs[1] = new DiagnosticsTab(this, conn, bus);
+        tabs[2] = new BatteryTab(this, conn, bus);
+        tabs[3] = new SignalsTab(this, conn, bus);
+        tabs[4] = new FaultsTab(this, conn, bus);
+        tabs[5] = new LogTab(this, conn, bus);
+        tabs[6] = new SettingsTab(this, conn);
+        tabs[7] = new AdbTab(this, conn);
+        tabs[8] = new ModeTab(this, conn);
+        tabs[9] = new TechPackTab(this, conn);
+        tabs[10] = new DevTab(this, conn, bus);
 
         setContentView(buildRoot());
         selectTab(0);
@@ -181,6 +183,12 @@ public final class MainActivity extends Activity {
             tabButtons[i].setTextColor(i == index ? Ui.ACCENT : Ui.DIM);
             tabButtons[i].setTypeface(null,
                     i == index ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+            if (i == index) {
+                tabButtons[i].setBackground(Ui.round(this,
+                        Ui.alpha(Ui.ACCENT, 0x1A), 20, Ui.alpha(Ui.ACCENT, 0x55)));
+            } else {
+                tabButtons[i].setBackgroundColor(Color.TRANSPARENT);
+            }
         }
         final Button chosen = tabButtons[index];
         barScroll.post(() -> barScroll.smoothScrollTo(
