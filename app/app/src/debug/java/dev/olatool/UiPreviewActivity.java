@@ -40,9 +40,10 @@ public final class UiPreviewActivity extends Activity {
 
         VehicleTab vehicle = new VehicleTab(this, new Conn(), null);
         DiagnosticsTab diagnostics = new DiagnosticsTab(this, new Conn(), null);
-        vehicle.render(demoVehicle());
+        boolean trickle = getIntent().getBooleanExtra("trickle", false);
+        vehicle.render(trickle ? trickleVehicle() : demoVehicle());
         vehicle.applyInfo(demoInfo());
-        diagnostics.render(demoDiagnostics());
+        diagnostics.render(trickle ? trickleDiagnostics() : demoDiagnostics());
 
         vehicleView = vehicle.view();
         diagnosticsView = diagnostics.view();
@@ -175,7 +176,6 @@ public final class UiPreviewActivity extends Activity {
 
     private PanelData demoDiagnostics() {
         PanelData d = demoVehicle();
-
         d.signals.put("Horn", 1.0);
         d.signals.put("High_Low_beam_short_press", 0.0);
         d.signals.put("Left_Indicator", 0.0);
@@ -215,5 +215,23 @@ public final class UiPreviewActivity extends Activity {
                     (i == 3 || i == 11) ? 1.0 : 0.0);
         }
         return d;
+    }
+
+    /**
+     * Only the telematics sleep trickle: frames arrive, but none of them carry
+     * vehicle data. Used to check the "no vehicle data" banners without a bus.
+     */
+    private PanelData trickleVehicle() {
+        PanelData d = new PanelData();
+        long now = System.currentTimeMillis();
+        d.frames = 12;
+        d.lastFrameMs = now;
+        d.pps = 1;
+        d.activeFaults = 0;
+        return d;
+    }
+
+    private PanelData trickleDiagnostics() {
+        return trickleVehicle();
     }
 }
