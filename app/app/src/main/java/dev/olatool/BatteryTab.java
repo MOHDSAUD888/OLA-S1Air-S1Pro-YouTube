@@ -191,20 +191,22 @@ public final class BatteryTab implements Tab {
             return;
         }
         long now = System.currentTimeMillis();
-        boolean stale = s.frames > 0 && s.lastFrameMs > 0
-                && now - s.lastFrameMs > STALE_MS;
+        boolean stale = s.sohStale(now, STALE_MS);
+        boolean noSoh = Double.isNaN(s.soh);
         if (s.empty()) {
             verdict.setText("No frames yet");
             verdict.setTextColor(Ui.DIM);
             hint.setText("The bus is silent. The vehicle is probably asleep — press the "
                     + "red start button or plug in the charger.");
-        } else if (stale) {
+        } else if (stale || noSoh) {
             // The values below are the last ones seen, not a live reading. Do not
             // turn them into a health verdict while the bus is silent.
             verdict.setText("Pack: no live data");
             verdict.setTextColor(Ui.DIM);
-            hint.setText("No CAN frames for " + ((now - s.lastFrameMs) / 1000)
-                    + " s. The scooter is asleep or the stream stopped.");
+            hint.setText(stale
+                    ? "No pack SOH for " + ((now - s.sohAt) / 1000)
+                            + " s. The scooter is asleep or the battery data stopped."
+                    : "Frames are arriving but no pack SOH yet. Waiting for the battery.");
         } else {
             String health = sohVerdict(s.soh);
             verdict.setText("Pack: " + health);
@@ -214,7 +216,7 @@ public final class BatteryTab implements Tab {
         }
 
         soc.set(Ui.pct(s.soc));
-        soh.set(stale ? Ui.DASH : Ui.pct(s.soh) + "  " + sohVerdict(s.soh));
+        soh.set(stale || noSoh ? Ui.DASH : Ui.pct(s.soh) + "  " + sohVerdict(s.soh));
         volts.set(Ui.fmt(s.packV, 2) + " V");
         amps.set(Ui.fmt(s.packA, 2) + " A");
         power.set(Ui.fmt(s.powerW() / 1000.0, 2) + " kW");

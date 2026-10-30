@@ -75,6 +75,8 @@ public final class PanelData {
 
     public long frames;
     public long lastFrameMs;
+    public long vehicleAt;
+    public long sohAt;
     public int pps;
     public int activeFaults;
 
@@ -122,6 +124,8 @@ public final class PanelData {
         if (s != null) {
             d.frames = s.frames;
             d.lastFrameMs = s.lastFrameMs;
+            d.vehicleAt = s.vehicleAt;
+            d.sohAt = s.sohAt;
             d.pps = s.pps;
             d.activeFaults = s.activeFaults == null ? 0 : s.activeFaults.size();
             d.soc = s.soc;
@@ -185,9 +189,17 @@ public final class PanelData {
         return frames > 0;
     }
 
-    /** True when frames stopped arriving more than {@code ms} ago. */
-    public boolean stale(long nowMs, long ms) {
-        return frames > 0 && lastFrameMs > 0 && nowMs - lastFrameMs > ms;
+    /**
+     * True when only the telematics sleep trickle is arriving. Those frames
+     * keep {@link #lastFrameMs} fresh without carrying any vehicle data.
+     */
+    public boolean vehicleStale(long nowMs, long ms) {
+        return frames > 0 && (vehicleAt == 0 || nowMs - vehicleAt > ms);
+    }
+
+    /** True when SOH was seen once but has not been refreshed since. */
+    public boolean sohStale(long nowMs, long ms) {
+        return sohAt > 0 && nowMs - sohAt > ms;
     }
 
     public int cellCount() {

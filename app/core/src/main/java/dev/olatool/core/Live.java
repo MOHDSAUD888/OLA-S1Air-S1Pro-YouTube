@@ -47,6 +47,12 @@ public final class Live {
         public long lastFrameMs;
         public long firstFrameMs;
 
+        /** Last frame from a vehicle ECU, ignoring the telematics sleep trickle. */
+        public long vehicleAt;
+
+        /** Last frame that actually carried SOH. */
+        public long sohAt;
+
         public double soc = Double.NaN;
         public double soh = Double.NaN;
         public double speedKph = Double.NaN;
@@ -115,6 +121,21 @@ public final class Live {
             return frames == 0;
         }
 
+        /**
+         * True when frames are arriving but none of them are vehicle data.
+         * The telematics unit keeps a five-ID trickle alive while the scooter
+         * sleeps; treating that as "live" is what made a stale pack look
+         * healthy or degraded.
+         */
+        public boolean vehicleStale(long nowMs, long ms) {
+            return frames > 0 && (vehicleAt == 0 || nowMs - vehicleAt > ms);
+        }
+
+        /** True when SOH was seen once but has not been refreshed since. */
+        public boolean sohStale(long nowMs, long ms) {
+            return sohAt > 0 && nowMs - sohAt > ms;
+        }
+
         // ---------------------------------------------------------- safety
 
         public String fallName() {
@@ -161,6 +182,7 @@ public final class Live {
     private final Faults faults;
 
     private final Map<String, Double> values = new LinkedHashMap<>();
+    private final Map<String, Long> valueAt = new LinkedHashMap<>();
     private final Map<Integer, Long> lastSeen = new LinkedHashMap<>();
     private final Map<Integer, Integer> counts = new LinkedHashMap<>();
     private final Map<String, Faults.Fault> latched = new LinkedHashMap<>();
@@ -169,6 +191,7 @@ public final class Live {
     private long frames;
     private long firstFrameMs;
     private long lastFrameMs;
+    private long vehicleAt;
     private long windowStartMs;
     private int windowFrames;
     private int pps;
@@ -195,12 +218,18 @@ public final class Live {
         Dbc.Frame decoded = dbc.decodeFrame(frame);
 
         values.putAll(decoded.signals);
+        for (String name : decoded.signals.keySet()) {
+            valueAt.put(name, now);
+        }
         frames++;
         if (firstFrameMs == 0) {
             firstFrameMs = now;
             windowStartMs = now;
         }
         lastFrameMs = now;
+        if (!sleepTrickle(frame.id)) {
+            vehicleAt = now;
+        }
         lastSeen.put(frame.id, now);
         Integer c = counts.get(frame.id);
         counts.put(frame.id, c == null ? 1 : c + 1);
@@ -243,6 +272,7 @@ public final class Live {
     /** Forgets everything, e.g. after a reconnect. */
     public synchronized void reset() {
         values.clear();
+        valueAt.clear();
         lastSeen.clear();
         counts.clear();
         latched.clear();
@@ -250,6 +280,7 @@ public final class Live {
         frames = 0;
         firstFrameMs = 0;
         lastFrameMs = 0;
+        vehicleAt = 0;
         windowStartMs = 0;
         windowFrames = 0;
         pps = 0;
@@ -277,6 +308,29 @@ public final class Live {
     public synchronized long lastSeenMs(int canId) {
         Long t = lastSeen.get(canId);
         return t == null ? 0 : t;
+    }
+
+    /** When a signal last arrived, or 0 if it never has. */
+    public synchronized long valueAtMs(String signal) {
+        Long t = valueAt.get(signal);
+        return t == null ? 0 : t;
+    }
+
+    /**
+     * The five IDs the telematics unit keeps alive while the vehicle sleeps.
+     * They carry GPS/LTE/Wi-Fi state, not battery or motor health.
+     */
+    private static boolean sleepTrickle(int id) {
+        switch (id) {
+            case 0x6D2:
+            case 0x643:
+            case 0x6DB:
+            case 0x66D:
+            case 0x65D:
+                return true;
+            default:
+                return false;
+        }
     }
 
     /** Newest first. */
@@ -312,11 +366,14 @@ public final class Live {
         s.signalsSeen = values.size();
         s.firstFrameMs = firstFrameMs;
         s.lastFrameMs = lastFrameMs;
+        s.vehicleAt = vehicleAt;
 
         s.soc = value("Display_SoC");
         s.soh = value("SOH_Disp");
+        s.sohAt = valueAtMs("SOH_Disp");
         if (Double.isNaN(s.soh)) {
             s.soh = value("Pack_SoH");
+            s.sohAt = valueAtMs("Pack_SoH");
         }
         s.speedKph = value("Vehicle_speed_in_kmph");
         s.rangeKm = value("Vehicle_Range");

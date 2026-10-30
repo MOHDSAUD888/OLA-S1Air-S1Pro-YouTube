@@ -296,9 +296,9 @@ final class VehicleTab implements Tab, Bus.Listener {
             showBanner = true;
             message = "Connected, but no CAN frames yet. Turn the dash on; "
                     + "this clears by itself.";
-        } else if (d.stale(now, STALE_MS)) {
+        } else if (d.vehicleStale(now, STALE_MS)) {
             showBanner = true;
-            message = "No CAN frames for more than 6 seconds. The scooter may be "
+            message = "No vehicle CAN data for more than 6 seconds. The scooter may be "
                     + "asleep or locked. Turn the dash on.";
         } else {
             showBanner = false;

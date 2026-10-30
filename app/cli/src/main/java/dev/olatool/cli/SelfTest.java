@@ -17,6 +17,7 @@ import dev.olatool.core.Faults;
 import dev.olatool.core.Json;
 import dev.olatool.core.Live;
 import dev.olatool.core.Msg;
+import dev.olatool.core.PanelData;
 import dev.olatool.core.Provision;
 import dev.olatool.core.VehicleInfo;
 
@@ -191,6 +192,43 @@ public final class SelfTest {
         eq("tow inactive", "inactive", safe.towName());
         eq("regen available", "available", safe.regenName());
         eq("hill active", "active", safe.hillName());
+
+        long now = System.currentTimeMillis();
+        eq("soh timestamp set", true, safe.sohAt > 0);
+        eq("vehicle timestamp set", true, safe.vehicleAt > 0);
+        eq("soh fresh", false, safe.sohStale(now, 6000));
+        eq("soh stale after gap", true, safe.sohStale(safe.sohAt + 7000, 6000));
+
+        live.reset();
+
+        // The sleep trickle keeps frames arriving but carries no vehicle data.
+        live.onFrame(new Can.Frame(0x6D2, 8, new byte[8]));
+        Live.Snapshot trickle = live.snapshot();
+        eq("trickle frames", 1L, trickle.frames);
+        eq("trickle vehicle at", 0L, trickle.vehicleAt);
+        eq("trickle is vehicle-stale", true,
+                trickle.vehicleStale(System.currentTimeMillis(), 6000));
+        eq("trickle soh missing", true, Double.isNaN(trickle.soh));
+        eq("trickle soh not stale", false,
+                trickle.sohStale(System.currentTimeMillis(), 6000));
+
+        // 0x150 BMS00_Parameter_3: Pack_SoH is byte 5.
+        byte[] bms = new byte[8];
+        bms[5] = 96;
+        live.onFrame(new Can.Frame(0x150, 8, bms));
+        Live.Snapshot pack = live.snapshot();
+        eq("pack soh fallback", 96.0, pack.soh);
+        eq("pack soh timestamp", true, pack.sohAt > 0);
+        eq("pack vehicle timestamp", true, pack.vehicleAt > 0);
+        eq("pack not vehicle-stale", false,
+                pack.vehicleStale(System.currentTimeMillis(), 6000));
+        eq("pack soh stale after gap", true, pack.sohStale(pack.sohAt + 7000, 6000));
+
+        PanelData panel = PanelData.from(pack, live);
+        eq("panel vehicle timestamp", pack.vehicleAt, panel.vehicleAt);
+        eq("panel soh timestamp", pack.sohAt, panel.sohAt);
+        eq("panel soh fresh", false,
+                panel.sohStale(System.currentTimeMillis(), 6000));
 
         live.reset();
         eq("reset frames", 0L, live.snapshot().frames);

@@ -318,12 +318,12 @@ final class DiagnosticsTab implements Tab, Bus.Listener {
         }
         long now = System.currentTimeMillis();
 
-        boolean stale = d.stale(now, STALE_MS);
+        boolean stale = d.vehicleStale(now, STALE_MS);
         boolean noFramesYet = d.frames == 0 && connected;
         if (stale || noFramesYet) {
             banner.setVisibility(View.VISIBLE);
             String why = stale
-                    ? "No CAN frames for more than 6 seconds. The scooter may be "
+                    ? "No vehicle CAN data for more than 6 seconds. The scooter may be "
                             + "asleep or locked. Turn the dash on."
                     : "Connected, but no CAN frames yet. Turn the dash on.";
             Ui.set(bannerBody, why + "\nStream: "
@@ -336,6 +336,9 @@ final class DiagnosticsTab implements Tab, Bus.Listener {
         if (d.frames == 0) {
             Ui.set(statusTitle, "Waiting for CAN data");
             statusTitle.setTextColor(Ui.DIM);
+        } else if (stale) {
+            Ui.set(statusTitle, "Waiting for vehicle data");
+            statusTitle.setTextColor(Ui.WARN);
         } else if (faults <= 0) {
             Ui.set(statusTitle, "Systems operational");
             statusTitle.setTextColor(Ui.ACCENT);

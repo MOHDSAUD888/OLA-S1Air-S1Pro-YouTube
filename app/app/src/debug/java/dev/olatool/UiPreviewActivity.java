@@ -115,8 +115,11 @@ public final class UiPreviewActivity extends Activity {
 
     private PanelData demoVehicle() {
         PanelData d = new PanelData();
+        long now = System.currentTimeMillis();
         d.frames = 18432;
-        d.lastFrameMs = System.currentTimeMillis();
+        d.lastFrameMs = now;
+        d.vehicleAt = now;
+        d.sohAt = now;
         d.pps = 87;
         d.activeFaults = 0;
         d.soc = 72;
