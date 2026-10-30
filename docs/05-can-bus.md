@@ -22,17 +22,23 @@ vcan0   (virtual CAN interface inside Android)
 `vcan0` is not filtered. If it is quiet, the vehicle really is quiet — it is not
 a cable fault and not a missing ID.
 
-Three ways to read it:
+Ways to read it:
 
 | Path | What you get | Notes |
 |---|---|---|
 | `candump vcan0` | raw frames | simplest, works from root shell |
-| gRPC `CanDumpStream` | the same tap | unfiltered |
+| gRPC `CanDumpStream` | the same tap | unfiltered; this is the path the app uses |
+| gRPC `ReadCanStream` | frames after `Init`, in theory | stayed silent on our unit even after `Init`; prefer the dump tap |
 | gRPC `ReadCanFrame` | only IDs you subscribed to with `Init` | blocks forever if none arrive |
 | `logcat` from the parser app | every frame the app parsed | full rate, no wedge risk |
 
-The last one is underrated. The vehicle parser logs each frame it decodes, so
-`logcat` gives you a decoded stream without writing any code.
+On the unit this was tested against, `ReadCanStream` returned zero frames even
+after `Init` with the live IDs, while `CanDumpStream` delivered exactly the same
+sleep trickle that `candump` showed. Treat the dump tap as the reliable push
+path, and do not assume a silent `ReadCanStream` means a silent bus.
+
+The `logcat` path is underrated. The vehicle parser logs each frame it decodes,
+so `logcat` gives you a decoded stream without writing any code.
 
 ---
 

@@ -231,10 +231,10 @@ public final class Main {
         Live live = new Live(dbc, faults);
         System.out.printf("table   %d messages, %d signals, %d faults%n",
                 dbc.size(), dbc.signalCount(), faults.size());
-        System.out.println("stream  ReadCanStream, " + seconds + " s, no deadline");
+        System.out.println("stream  CanDumpStream, " + seconds + " s, no deadline");
         System.out.println();
 
-        Rpc.Cancel cancel = rpc.streamCanFrames(new Rpc.FrameSink() {
+        Rpc.Cancel cancel = rpc.dumpCanFrames(new Rpc.FrameSink() {
             @Override
             public void frame(Can.Frame frame) {
                 live.onFrame(frame);
@@ -283,7 +283,7 @@ public final class Main {
         Faults table = loadFaults();
         Live live = new Live(dbc, table);
 
-        Rpc.Cancel cancel = rpc.streamCanFrames(new Rpc.FrameSink() {
+        Rpc.Cancel cancel = rpc.dumpCanFrames(new Rpc.FrameSink() {
             @Override
             public void frame(Can.Frame frame) {
                 live.onFrame(frame);
@@ -325,7 +325,7 @@ public final class Main {
     private static void log(Rpc rpc, int seconds) {
         Dbc dbc = loadDbc();
         Live live = new Live(dbc, loadFaults());
-        Rpc.Cancel cancel = rpc.streamCanFrames(new Rpc.FrameSink() {
+        Rpc.Cancel cancel = rpc.dumpCanFrames(new Rpc.FrameSink() {
             @Override
             public void frame(Can.Frame frame) {
                 live.onFrame(frame);

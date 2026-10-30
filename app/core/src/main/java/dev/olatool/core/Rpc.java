@@ -263,7 +263,9 @@ public final class Rpc implements Closeable {
     }
 
     /**
-     * {@code ReadCanStream}: the daemon pushes every frame it sees.
+     * {@code ReadCanStream}: the daemon is supposed to push every frame it
+     * sees. On this unit it stays silent even after {@code Init}, so callers
+     * that need live data should use {@link #dumpCanFrames} instead.
      *
      * <p>No deadline is set on purpose. The call is cancelled with
      * {@link Cancel#close()}, which tears the RPC down without a deadline
@@ -273,7 +275,10 @@ public final class Rpc implements Closeable {
         return stream("ReadCanStream", sink);
     }
 
-    /** {@code CanDumpStream}: the same push, from the raw dump path. */
+    /**
+     * {@code CanDumpStream}: the unfiltered tap on {@code vcan0}. This is the
+     * path that actually delivers frames, including the sleep trickle.
+     */
     public Cancel dumpCanFrames(FrameSink sink) {
         return stream("CanDumpStream", sink);
     }

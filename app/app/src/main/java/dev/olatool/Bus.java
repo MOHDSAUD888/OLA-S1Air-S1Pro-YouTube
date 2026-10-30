@@ -22,11 +22,13 @@ import dev.olatool.core.Rpc;
 /**
  * One CAN stream for the whole app.
  *
- * <p>The daemon can be told to push frames with {@code ReadCanStream}, and that
- * stream has to be opened once. If every tab opened its own, they would steal
- * frames from each other and the bus would look half dead. So this class owns
- * the one stream, decodes into a single {@link Live}, and hands the same
- * {@link Live.Snapshot} to every screen at 10 Hz.
+ * <p>The daemon pushes frames through {@code CanDumpStream}, the unfiltered tap
+ * on {@code vcan0}. {@code ReadCanStream} looks equivalent on paper but stays
+ * silent on this unit even after {@code Init}, so the dump tap is the one that
+ * actually carries data. The stream has to be opened once: if every tab opened
+ * its own, they would steal frames from each other and the bus would look half
+ * dead. So this class owns the one stream, decodes into a single {@link Live},
+ * and hands the same {@link Live.Snapshot} to every screen at 10 Hz.
  *
  * <p>It does not do any connection work: it reads {@link Conn#rpc()} and
  * re-opens the stream when that changes. The address discovery stays in
@@ -228,7 +230,7 @@ public final class Bus {
         retryAt = 0;
         openedAt = System.currentTimeMillis();
         state = "streaming";
-        cancel = rpc.streamCanFrames(new Rpc.FrameSink() {
+        cancel = rpc.dumpCanFrames(new Rpc.FrameSink() {
             @Override
             public void frame(Can.Frame frame) {
                 Live target = live;
