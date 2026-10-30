@@ -1,0 +1,1750 @@
+{
+ "faults": [
+  {
+   "id": "bmsPrechargeFail",
+   "title": "Precharge Circuit Failure",
+   "description": "High-voltage precharge circuit failed to energize battery pack safely.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "cellPermanentFault",
+   "title": "Cell Permanent Fault",
+   "description": "Permanent degradation or cell failure detected in battery module.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsOvervoltPerm",
+   "title": "Overvoltage Charge Permanent Fault",
+   "description": "Permanent overvoltage condition triggered in battery pack during charging.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsUndervoltPerm",
+   "title": "Undervoltage Permanent Fault",
+   "description": "Permanent undervoltage condition detected across battery cells.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsOvertempDrive",
+   "title": "Battery Overtemperature Error",
+   "description": "Battery pack operating temperature exceeded safe thermal limits during drive.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsOvervoltCharge",
+   "title": "Overvoltage Charge Error",
+   "description": "Battery pack voltage exceeded maximum safe charge voltage threshold.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsUndervoltErr",
+   "title": "Undervoltage Error",
+   "description": "Battery cell voltage dropped below minimum operational limit.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsPduOvertemp",
+   "title": "PDU Overtemperature",
+   "description": "Power Distribution Unit temperature exceeded thermal limit.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsVoltSensorFail",
+   "title": "Voltage Sensor Failure",
+   "description": "BMS cell voltage monitoring sensor reports open or short circuit.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsTempSensorFail",
+   "title": "Battery Temperature Sensor Failure",
+   "description": "Battery pack temperature sensor circuit failure or range error.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsCurrSensorFail",
+   "title": "Current Sensor Failure",
+   "description": "BMS current sensing circuit open circuit or signal failure.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "thermalRunaway",
+   "title": "Thermal Runaway Fault",
+   "description": "Hazardous thermal runaway condition detected in battery pack.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "cellDipFault",
+   "title": "Cell Voltage Dip Fault",
+   "description": "Sudden voltage drop or transient imbalance detected under load.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsVoltSensorFailCell2",
+   "title": "Cell 2 Voltage Sensor Failure",
+   "description": "Voltage sensing line for battery cell 2 reports open circuit or signal failure.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsVoltSensorFailCell3",
+   "title": "Cell 3 Voltage Sensor Failure",
+   "description": "Voltage sensing line for battery cell 3 reports open circuit or signal failure.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsVoltSensorFailCell4",
+   "title": "Cell 4 Voltage Sensor Failure",
+   "description": "Voltage sensing line for battery cell 4 reports open circuit or signal failure.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsVoltSensorFailCell5",
+   "title": "Cell 5 Voltage Sensor Failure",
+   "description": "Voltage sensing line for battery cell 5 reports open circuit or signal failure.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsVoltSensorFailCell6",
+   "title": "Cell 6 Voltage Sensor Failure",
+   "description": "Voltage sensing line for battery cell 6 reports open circuit or signal failure.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsVoltSensorFailCell7",
+   "title": "Cell 7 Voltage Sensor Failure",
+   "description": "Voltage sensing line for battery cell 7 reports open circuit or signal failure.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsVoltSensorFailCell8",
+   "title": "Cell 8 Voltage Sensor Failure",
+   "description": "Voltage sensing line for battery cell 8 reports open circuit or signal failure.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsVoltSensorFailCell9",
+   "title": "Cell 9 Voltage Sensor Failure",
+   "description": "Voltage sensing line for battery cell 9 reports open circuit or signal failure.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsVoltSensorFailCell10",
+   "title": "Cell 10 Voltage Sensor Failure",
+   "description": "Voltage sensing line for battery cell 10 reports open circuit or signal failure.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsVoltSensorFailCell11",
+   "title": "Cell 11 Voltage Sensor Failure",
+   "description": "Voltage sensing line for battery cell 11 reports open circuit or signal failure.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsVoltSensorFailCell12",
+   "title": "Cell 12 Voltage Sensor Failure",
+   "description": "Voltage sensing line for battery cell 12 reports open circuit or signal failure.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsVoltSensorFailCell13",
+   "title": "Cell 13 Voltage Sensor Failure",
+   "description": "Voltage sensing line for battery cell 13 reports open circuit or signal failure.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsVoltSensorFailCell14",
+   "title": "Cell 14 Voltage Sensor Failure",
+   "description": "Voltage sensing line for battery cell 14 reports open circuit or signal failure.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsTempSensorFail2",
+   "title": "Battery Temp Sensor 2 Failure",
+   "description": "Secondary temperature sensor circuit failure or out-of-range reading.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsTempSensorFail3",
+   "title": "Battery Temp Sensor 3 Failure",
+   "description": "Tertiary temperature sensor circuit failure or out-of-range reading.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsTempSensorFail4",
+   "title": "Battery Temp Sensor 4 Failure",
+   "description": "Fourth temperature sensor circuit failure or out-of-range reading.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsTempSensorFail5",
+   "title": "Battery Temp Sensor 5 Failure",
+   "description": "Fifth temperature sensor circuit failure or out-of-range reading.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsTempSensorFail6",
+   "title": "Battery Temp Sensor 6 Failure",
+   "description": "Sixth temperature sensor circuit failure or out-of-range reading.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsCurrSensorFailShort",
+   "title": "BMS Current Sensor Short Circuit",
+   "description": "Current sensor channel short circuit detected in battery management system.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsMosfetConnectionFail",
+   "title": "BMS MOSFET Connection Fault",
+   "description": "Power MOSFET gate or drain connection failure detected in BMS switching circuit.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsMosfetDisconnectionFail",
+   "title": "BMS MOSFET Disconnection Fault",
+   "description": "Power MOSFET failed to disconnect or open during shutdown signal.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsCellVentFailure",
+   "title": "Battery Cell Venting Failure",
+   "description": "Hazardous pressure build-up or cell venting event detected in battery module.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsShortCircuitPermanentFault",
+   "title": "BMS Permanent Short Circuit Fault",
+   "description": "Permanent short circuit condition logged across battery pack power rails.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsBattTempAbnormalFault",
+   "title": "Abnormal Battery Temperature",
+   "description": "Irregular temperature differential detected across battery cell modules.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsCompSpikeFault",
+   "title": "BMS Voltage Spike Fault",
+   "description": "Transient overvoltage spike detected on BMS internal sensing lines.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsSbcFaultActive",
+   "title": "BMS System Basis Chip Fault",
+   "description": "System Basis Chip (SBC) watchdog or power supply fault active in BMS.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsSleepTempFault",
+   "title": "Sleep Mode Temperature Fault",
+   "description": "Battery pack temperature limits exceeded while vehicle was in sleep mode.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bms3v3Fault",
+   "title": "BMS 3.3V Power Rail Fault",
+   "description": "Internal 3.3V logic power supply rail voltage out of tolerance.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "thermalRunawayShadowFault",
+   "title": "Thermal Runaway Shadow Warning",
+   "description": "Early thermal anomaly detected by shadow monitoring algorithms.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "batteryPrechargeFail00",
+   "title": "Battery Precharge Failure Stage 0",
+   "description": "Precharge contactor failed to energize DC bus within initial timeout period.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "batteryPrechargeFail01",
+   "title": "Battery Precharge Failure Stage 1",
+   "description": "Precharge voltage failed to reach target threshold prior to main contactor closure.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "batteryPrechargeFail02",
+   "title": "Battery Precharge Failure Stage 2",
+   "description": "High-voltage bus precharge resistor temperature exceeded thermal limit.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "batteryPermanentFault00",
+   "title": "Battery Lockout Permanent Fault 0",
+   "description": "Critical battery pack safety trip triggered; service lock active.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "batteryPermanentFault01",
+   "title": "Battery Lockout Permanent Fault 1",
+   "description": "Severe internal cell imbalance safety trip; battery replacement required.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "batteryPermanentFault02",
+   "title": "Battery Lockout Permanent Fault 2",
+   "description": "Hardware safety fuse or pyrofuse trip detected.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsParamPrechargeFail",
+   "title": "Precharge Parameter Error",
+   "description": "BMS flash configuration parameter mismatch for precharge timing.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsParamPermanentFault",
+   "title": "Permanent Fault Parameter Error",
+   "description": "Safety lockout parameter memory corrupt or invalid in BMS firmware.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsP7PrechargeFailure",
+   "title": "P7 Stage Precharge Failure",
+   "description": "Gen-7 P7 power module precharge circuit failed to complete handshake.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsP7MosfetConnectionFail",
+   "title": "P7 MOSFET Connection Fault",
+   "description": "Gen-7 P7 power module MOSFET connection open circuit.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsP7MosfetDisconnectionFail",
+   "title": "P7 MOSFET Disconnection Fault",
+   "description": "Gen-7 P7 power module MOSFET failed to disconnect on shutdown.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsNvmFailureStatus",
+   "title": "BMS Non-Volatile Memory Failure",
+   "description": "BMS EEPROM/Flash non-volatile memory read or write failure.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsMemAllocFailed",
+   "title": "BMS Memory Allocation Failed",
+   "description": "BMS microcontroller dynamic memory allocation failure.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsVoorCutoffError",
+   "title": "VOOR Cutoff Protection Error",
+   "description": "Voltage Over Operational Range (VOOR) cut-off circuit triggered.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsOvervoltRegenError",
+   "title": "Overvoltage Regen Cutoff",
+   "description": "High pack voltage during regenerative braking triggered safety trip.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsOvertempChargeError",
+   "title": "Overtemperature Charge Cutoff",
+   "description": "Battery charging halted due to high cell temperatures.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsCellVentError",
+   "title": "Cell Pressure Venting Warning",
+   "description": "Cell pressure sensor detected gas release event.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsShortCircuitErrorInfo",
+   "title": "Short Circuit Diagnostic Log",
+   "description": "Transient short-circuit protection event recorded by BMS.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsOvercurrentChargeError",
+   "title": "Overcurrent Charge Protection",
+   "description": "Charging current exceeded maximum allowable C-rate.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsLowTempDriveError",
+   "title": "Low Temperature Drive Limit",
+   "description": "Discharge power restricted due to low battery temperature.",
+   "severity": "INFO",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsCellDipError",
+   "title": "Transient Cell Voltage Dip",
+   "description": "Transient cell voltage drop detected during peak current draw.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsCompSpikeError",
+   "title": "Voltage Noise Spike Detected",
+   "description": "High-frequency voltage noise detected on measurement lines.",
+   "severity": "INFO",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsPduCutoffError",
+   "title": "PDU Power Cutoff Triggered",
+   "description": "Power Distribution Unit thermal/electrical trip triggered.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsSleepPduTempError",
+   "title": "Sleep PDU Temperature Warning",
+   "description": "PDU temperature elevated during vehicle sleep state.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsSleepPackTempError",
+   "title": "Sleep Battery Pack Temp Warning",
+   "description": "Battery pack temperature elevated during vehicle sleep state.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "batteryVoltageDeviationError",
+   "title": "Battery Voltage Imbalance",
+   "description": "Significant cell-to-cell voltage deviation detected.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsP1ShortCircuitError",
+   "title": "P1 Stage Short Circuit Error",
+   "description": "Gen-1 P1 power stage short circuit protection triggered.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsP7ShortCircuitError",
+   "title": "P7 Stage Short Circuit Error",
+   "description": "Gen-7 P7 power stage short circuit protection triggered.",
+   "severity": "CRITICAL",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsPduBswError",
+   "title": "PDU Basic Software Fault",
+   "description": "PDU control software stack initialization error.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsOvertempDriveBswError",
+   "title": "Drive Overtemp Software Error",
+   "description": "Thermal management software execution error during drive.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsStopAckError",
+   "title": "BMS Stop Acknowledge Error",
+   "description": "BMS failed to respond to VCU shutdown command.",
+   "severity": "WARNING",
+   "component": "BMS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "mcuHwOvercurrent",
+   "title": "Hardware Overcurrent Fault",
+   "description": "Motor controller hardware current protection triggered.",
+   "severity": "CRITICAL",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "mcuHwOvervoltage",
+   "title": "Hardware Overvoltage Fault",
+   "description": "Motor controller DC bus hardware overvoltage limit exceeded.",
+   "severity": "CRITICAL",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "motorStallFault",
+   "title": "Motor Stall Fault",
+   "description": "Motor rotor locked or stalled under active drive command.",
+   "severity": "CRITICAL",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "motorOverspeed",
+   "title": "Motor Overspeed Fault",
+   "description": "Motor rotational speed exceeded maximum Grade 3 limit.",
+   "severity": "CRITICAL",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "motorOvertemp",
+   "title": "Motor Overtemperature",
+   "description": "Drive motor windings exceeded Grade 3 thermal threshold.",
+   "severity": "WARNING",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "mcuDriveOvertemp",
+   "title": "Inverter Drive Overtemperature",
+   "description": "MCU power inverter stage exceeded Grade 3 thermal limit.",
+   "severity": "WARNING",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "mcuCanFail",
+   "title": "MCU Communication Failure",
+   "description": "Abnormal internal bus communication failure between MCU and VCU.",
+   "severity": "CRITICAL",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "mcuPosCntMismatch",
+   "title": "Position Counter Mismatch",
+   "description": "Rotor position counter mismatch detected with PWM generation.",
+   "severity": "WARNING",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "mcuPwmMissing",
+   "title": "PWM Signal Missing",
+   "description": "Gate driver PWM control signal missing or interrupted.",
+   "severity": "CRITICAL",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "mcuSwOvervoltageFault",
+   "title": "MCU Software Overvoltage Protection",
+   "description": "Software-level DC bus overvoltage threshold exceeded.",
+   "severity": "CRITICAL",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "motorParamTuningFail",
+   "title": "Motor Parameter Tuning Failure",
+   "description": "Automatic motor parameter identification or calibration failed.",
+   "severity": "WARNING",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "uPhaseHallFault",
+   "title": "Phase U Hall Sensor Fault",
+   "description": "Phase U position Hall sensor signal missing or noisy.",
+   "severity": "CRITICAL",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "dcBusUndervoltageFault",
+   "title": "DC Bus Undervoltage Fault",
+   "description": "Inverter DC bus voltage dropped below minimum operating limit.",
+   "severity": "CRITICAL",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "motorTempSensorDisconnectFault",
+   "title": "Motor Temp Sensor Disconnected",
+   "description": "Motor thermistor sensing line open circuit.",
+   "severity": "WARNING",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "drivePowerUndervoltageFault",
+   "title": "Gate Drive Power Supply Undervoltage",
+   "description": "Gate driver isolated 15V power supply rail undervoltage.",
+   "severity": "CRITICAL",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "controllerDriveAbnormalFault",
+   "title": "Abnormal Inverter Drive Fault",
+   "description": "Unexpected current or switching behavior detected in inverter stage.",
+   "severity": "CRITICAL",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "lowVoltageSupplyUndervoltFault",
+   "title": "MCU 12V Supply Undervoltage",
+   "description": "MCU auxiliary 12V control power supply dropped below limit.",
+   "severity": "WARNING",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "uPhaseHallDisconnectFault",
+   "title": "Phase U Hall Disconnected",
+   "description": "Phase U Hall position sensor line disconnected.",
+   "severity": "CRITICAL",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "vPhaseHallDisconnectFault",
+   "title": "Phase V Hall Disconnected",
+   "description": "Phase V Hall position sensor line disconnected.",
+   "severity": "CRITICAL",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "wPhaseHallDisconnectFault",
+   "title": "Phase W Hall Disconnected",
+   "description": "Phase W Hall position sensor line disconnected.",
+   "severity": "CRITICAL",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "vPhaseHallAbnormalFault",
+   "title": "Phase V Hall Signal Abnormal",
+   "description": "Phase V Hall position sensor timing sequence invalid.",
+   "severity": "WARNING",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "wPhaseHallAbnormalFault",
+   "title": "Phase W Hall Signal Abnormal",
+   "description": "Phase W Hall position sensor timing sequence invalid.",
+   "severity": "WARNING",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "throttleWiper1Fail",
+   "title": "Throttle Sensor Channel 1 Failure",
+   "description": "Throttle position sensor main channel signal out of range.",
+   "severity": "CRITICAL",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "throttleWiper2Fail",
+   "title": "Throttle Sensor Channel 2 Failure",
+   "description": "Throttle position sensor redundant channel signal out of range.",
+   "severity": "CRITICAL",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "abPulseMismZiPulseFault",
+   "title": "Encoder AB Pulse Z Mismatch",
+   "description": "Rotor encoder quadrature pulses mismatch with index pulse.",
+   "severity": "WARNING",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "ziPulseMissingFault",
+   "title": "Encoder Index Pulse Missing",
+   "description": "Rotor encoder zero-index pulse missing during motor rotation.",
+   "severity": "WARNING",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "idIqRefTableError",
+   "title": "Motor Flux Reference Table Error",
+   "description": "FOC current control Id/Iq lookup table corrupted or uncalibrated.",
+   "severity": "WARNING",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "throttleDeviationError",
+   "title": "Throttle Channels Plausibility Error",
+   "description": "Deviation between primary and secondary throttle sensors exceeded threshold.",
+   "severity": "CRITICAL",
+   "component": "MCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "esclFailure",
+   "title": "Electronic Steering Lock Fault",
+   "description": "Electronic Steering Column Lock (ESCL) failed to engage or disengage.",
+   "severity": "CRITICAL",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "dcdcShortFault",
+   "title": "DC-DC Converter Short Circuit",
+   "description": "High-to-low voltage DC-DC converter output short circuit.",
+   "severity": "CRITICAL",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "dcdcOvertemp",
+   "title": "DC-DC Converter Overtemperature",
+   "description": "DC-DC converter operating temperature exceeded thermal threshold.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "dcdcOvercurrent",
+   "title": "DC-DC Converter Overcurrent",
+   "description": "Auxiliary 12V supply load current exceeded DC-DC rating.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bmsBoardVariantSwMismatch",
+   "title": "BMS Board Software Mismatch",
+   "description": "Incompatible software version detected for BMS hardware variant.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "cellChemistrySwMismatch",
+   "title": "Cell Chemistry Software Mismatch",
+   "description": "Installed software calibration does not match battery cell chemistry.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "dipswitchNotSentError",
+   "title": "Dipswitch Signal Not Sent",
+   "description": "Hardware configuration dipswitch configuration message missing.",
+   "severity": "INFO",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "vinVariantMismatch",
+   "title": "VIN Variant Mismatch",
+   "description": "Vehicle Identification Number variant configuration mismatch.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "variantDipswitchMismatch",
+   "title": "Variant Dipswitch Mismatch",
+   "description": "Hardware dipswitch state conflicts with soft variant definition.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bcmBmsMismatch",
+   "title": "BCM-BMS Configuration Mismatch",
+   "description": "Body Control Module and BMS software parameters mismatch.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "somBmsMismatch",
+   "title": "SOM-BMS Configuration Mismatch",
+   "description": "System on Module and BMS parameter mismatch.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "mcuSwVariantMismatch",
+   "title": "MCU Software Variant Mismatch",
+   "description": "Motor Control Unit software variant incompatible with VCU configuration.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "bcmSwVersionVariantMismatch",
+   "title": "BCM Software Variant Mismatch",
+   "description": "Body Control Module software version incompatible with vehicle variant.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "vcuBmsReportedFault",
+   "title": "BMS Reported Fault to VCU",
+   "description": "Vehicle Control Unit received safety fault flag from BMS.",
+   "severity": "CRITICAL",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "cpwShortFault",
+   "title": "CPW Circuit Short",
+   "description": "Charge Port Wakeup (CPW) line short circuit fault.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "cpwOvercurrentFault",
+   "title": "CPW Overcurrent",
+   "description": "Charge Port Wakeup output current exceeded safe threshold.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "hvFcPosContactorOpenFault",
+   "title": "HV Fast Charge Contactor Open",
+   "description": "High-voltage fast charge positive contactor failed to close.",
+   "severity": "CRITICAL",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "hvFcPosContactorOvercurrentFault",
+   "title": "HV FC Contactor Overcurrent",
+   "description": "Fast charge positive contactor coil overcurrent detected.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "dcdcOpenCircuitFault",
+   "title": "DC-DC Open Circuit",
+   "description": "DC-DC converter input or output power connection open.",
+   "severity": "CRITICAL",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "dcdcOvervoltageFault",
+   "title": "DC-DC Output Overvoltage",
+   "description": "Auxiliary 12V bus voltage exceeded maximum safety limit.",
+   "severity": "CRITICAL",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "dcdcUndervoltageFault",
+   "title": "DC-DC Output Undervoltage",
+   "description": "Auxiliary 12V bus voltage dropped below minimum operating limit.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "esclShortFault",
+   "title": "ESCL Lock Short Circuit",
+   "description": "Electronic Steering Column Lock output shorted to ground.",
+   "severity": "CRITICAL",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "esclOvercurrentFault",
+   "title": "ESCL Lock Overcurrent",
+   "description": "Electronic Steering Column Lock drive current exceeded limit.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "vcuDriveStopFault",
+   "title": "VCU Drive Emergency Stop",
+   "description": "Vehicle Control Unit initiated mandatory drive disable command.",
+   "severity": "CRITICAL",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "vcuLimpHomeFault",
+   "title": "VCU Limp Home Mode",
+   "description": "Vehicle restricted to low-power Limp Home mode due to active faults.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "vcuMemAllocFailed",
+   "title": "VCU Memory Allocation Failure",
+   "description": "VCU RTOS dynamic memory allocation failed.",
+   "severity": "CRITICAL",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "vehicleErrorIndicatorTtl",
+   "title": "Vehicle Error Telltale Active",
+   "description": "Instrument cluster master warning telltale lamp commanded ON.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "hvFcPosContactorShortError",
+   "title": "HV FC Contactor Short Circuit",
+   "description": "Fast charge positive contactor coil or contact shorted.",
+   "severity": "CRITICAL",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "hvFcPosContactorOvertempError",
+   "title": "HV FC Contactor Overtemp",
+   "description": "Fast charge contactor assembly thermal limit exceeded.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "esclOpenCircuitError",
+   "title": "ESCL Open Circuit",
+   "description": "Electronic Steering Column Lock wiring disconnected.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "esclOvertempError",
+   "title": "ESCL Overtemperature",
+   "description": "Steering lock actuator solenoid temperature high.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "vcuStopAckError",
+   "title": "VCU Stop Acknowledge Timeout",
+   "description": "VCU failed to receive stop acknowledgment from sub-controllers.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "vehicleErrorState",
+   "title": "Vehicle Error State Active",
+   "description": "Vehicle operating system entered general fault fallback state.",
+   "severity": "WARNING",
+   "component": "VCU",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "headlampOvercurrent",
+   "title": "Headlamp High Overcurrent",
+   "description": "LED headlamp high-beam circuit overcurrent fault.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "brakelampOvercurrent",
+   "title": "Brakelamp Overcurrent",
+   "description": "Brake light circuit current exceeded threshold.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "seatlockOvercurrent",
+   "title": "Seat Lock Actuator Overcurrent",
+   "description": "Electric seat latch solenoid overcurrent or mechanical jam.",
+   "severity": "WARNING",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "sidestandSensorFail",
+   "title": "Side Stand Sensor Fault",
+   "description": "Side stand position sensor circuit overcurrent or open fault.",
+   "severity": "WARNING",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "usbChargerFault",
+   "title": "USB Charger Overcurrent",
+   "description": "Auxiliary USB charging port short or overcurrent fault.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "hbcAndroidCommErr",
+   "title": "HBC Communication Error",
+   "description": "Handlebar Controller communication error with Android display.",
+   "severity": "WARNING",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "headlampLowOvercurrent",
+   "title": "Low Beam Overcurrent Fault",
+   "description": "Low beam LED headlamp driver circuit overcurrent.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "rearPositionOvercurrent",
+   "title": "Tail Lamp Overcurrent Fault",
+   "description": "Rear position LED lamp circuit current exceeded limit.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "plateLampOvercurrent",
+   "title": "License Plate Light Overcurrent",
+   "description": "License plate lamp circuit overcurrent detected.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "plateLampOvertempFault",
+   "title": "License Plate Light Overtemperature",
+   "description": "License plate light driver stage thermal threshold exceeded.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "frontPositionOvercurrent",
+   "title": "Front Position Light Overcurrent",
+   "description": "Front DRL / position lamp driver overcurrent.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "indicatorFlOvercurrent",
+   "title": "Front-Left Indicator Overcurrent",
+   "description": "Front-left turn signal LED output short or overcurrent.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "indicatorFrOvercurrent",
+   "title": "Front-Right Indicator Overcurrent",
+   "description": "Front-right turn signal LED output short or overcurrent.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "indicatorRlOvercurrent",
+   "title": "Rear-Left Indicator Overcurrent",
+   "description": "Rear-left turn signal LED output short or overcurrent.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "indicatorRrOvercurrent",
+   "title": "Rear-Right Indicator Overcurrent",
+   "description": "Rear-right turn signal LED output short or overcurrent.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "hornOvercurrent",
+   "title": "Horn Drive Overcurrent",
+   "description": "Acoustic horn driver circuit short circuit or overcurrent.",
+   "severity": "WARNING",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "sirenOvercurrent",
+   "title": "Anti-Theft Siren Overcurrent",
+   "description": "Security siren driver output overcurrent fault.",
+   "severity": "WARNING",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "headUnitOvercurrent",
+   "title": "Head Unit Power Supply Overcurrent",
+   "description": "Main touchscreen display unit 12V power supply current trip.",
+   "severity": "WARNING",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "hbcOvercurrent",
+   "title": "Handlebar Switch Overcurrent",
+   "description": "Handlebar Controller (HBC) power rail overcurrent.",
+   "severity": "WARNING",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "backlightDriverFault",
+   "title": "Display Backlight Driver Fault",
+   "description": "Instrument cluster LCD backlight LED driver fault.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "headlampLowOvertempError",
+   "title": "Low Beam Headlamp Overtemp",
+   "description": "Low beam LED heatsink temperature exceeded threshold.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "headlampHighOvertempError",
+   "title": "High Beam Headlamp Overtemp",
+   "description": "High beam LED heatsink temperature exceeded threshold.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "rearPositionOvertempError",
+   "title": "Tail Lamp Driver Overtemp",
+   "description": "Rear tail light driver circuit thermal warning.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "brakelampOvertempError",
+   "title": "Brake Light Driver Overtemp",
+   "description": "Brake light LED driver stage thermal warning.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "frontPositionOvertempError",
+   "title": "Front DRL Driver Overtemp",
+   "description": "Front position light driver thermal warning.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "indicatorFlOvertempError",
+   "title": "Front-Left Indicator Overtemp",
+   "description": "Front-left turn signal driver thermal warning.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "indicatorFrOvertempError",
+   "title": "Front-Right Indicator Overtemp",
+   "description": "Front-right turn signal driver thermal warning.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "indicatorRlOvertempError",
+   "title": "Rear-Left Indicator Overtemp",
+   "description": "Rear-left turn signal driver thermal warning.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "indicatorRrOvertempError",
+   "title": "Rear-Right Indicator Overtemp",
+   "description": "Rear-right turn signal driver thermal warning.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "hornOvertempError",
+   "title": "Horn Driver Overtemp",
+   "description": "Horn driver thermal protection active.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "sirenOvertempError",
+   "title": "Siren Driver Overtemp",
+   "description": "Alarm siren driver thermal protection active.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "seatlockOvertempError",
+   "title": "Seat Latch Actuator Overtemp",
+   "description": "Seat unlock solenoid thermal limit exceeded.",
+   "severity": "WARNING",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "headUnitOvertempError",
+   "title": "Head Unit Thermal Protection",
+   "description": "Dashboard display processor temperature high.",
+   "severity": "WARNING",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "sidestandSensorOvertempError",
+   "title": "Side Stand Sensor Overtemp",
+   "description": "Side stand sensor interface thermal limit exceeded.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "hbcOvertempError",
+   "title": "HBC Thermal Warning",
+   "description": "Handlebar controller internal temperature elevated.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "usbChargerOvertempError",
+   "title": "USB Charger Thermal Protection",
+   "description": "USB power supply temperature exceeded safe limit.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "hbcVehicleCommError",
+   "title": "HBC Vehicle Bus Comm Error",
+   "description": "Handlebar controller lost communication with vehicle CAN bus.",
+   "severity": "WARNING",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "speaker1ShortError",
+   "title": "Speaker 1 Short Circuit",
+   "description": "Primary audio speaker channel output shorted.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "speaker1OpenError",
+   "title": "Speaker 1 Open Circuit",
+   "description": "Primary audio speaker channel disconnected or open.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "speaker2ShortError",
+   "title": "Speaker 2 Short Circuit",
+   "description": "Secondary audio speaker channel output shorted.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "speaker2OpenError",
+   "title": "Speaker 2 Open Circuit",
+   "description": "Secondary audio speaker channel disconnected or open.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "microphoneShortError",
+   "title": "Microphone Circuit Short",
+   "description": "Voice microphone signal line shorted to ground.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "microphoneOpenError",
+   "title": "Microphone Open Circuit",
+   "description": "Voice microphone signal line disconnected.",
+   "severity": "INFO",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "huErrorStatus",
+   "title": "Head Unit System Fault",
+   "description": "Touchscreen head unit reported internal software/hardware error.",
+   "severity": "WARNING",
+   "component": "SENSORS",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "chargerShortErr",
+   "title": "Charger Output Short Circuit",
+   "description": "Charger output terminals short circuit detected. Charging disabled.",
+   "severity": "CRITICAL",
+   "component": "CHARGER",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "chargerRectifierErr",
+   "title": "Charger Rectifier Error",
+   "description": "Internal AC-DC rectifier power stage hardware failure.",
+   "severity": "CRITICAL",
+   "component": "CHARGER",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "chargerOvertemp",
+   "title": "Charger Overtemperature",
+   "description": "Charger internal heatsink temperature exceeded thermal threshold.",
+   "severity": "WARNING",
+   "component": "CHARGER",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "chargerLowAc",
+   "title": "Low AC Input Voltage",
+   "description": "Mains AC supply voltage below minimum operating limit.",
+   "severity": "WARNING",
+   "component": "CHARGER",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "chargerAuthErr",
+   "title": "Charger Authentication Error",
+   "description": "On-board charger failed security handshake with vehicle VCU.",
+   "severity": "WARNING",
+   "component": "CHARGER",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "chargerTimeoutErr",
+   "title": "Charger Timeout Error",
+   "description": "Charger communication timeout waiting for BMS battery parameters.",
+   "severity": "WARNING",
+   "component": "CHARGER",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "slowChargerFaultInfo",
+   "title": "AC Slow Charger Fault",
+   "description": "On-board AC home charger reported general operating fault.",
+   "severity": "WARNING",
+   "component": "CHARGER",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "fastChargerFaultInfo",
+   "title": "DC Fast Charger Fault",
+   "description": "Off-board DC fast charging station or handshake fault.",
+   "severity": "WARNING",
+   "component": "CHARGER",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "chargerUndertempError",
+   "title": "Charger Undertemperature",
+   "description": "Charger ambient temperature below minimum operating limit.",
+   "severity": "WARNING",
+   "component": "CHARGER",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "chargerDataCorruptionError",
+   "title": "Charger Data Corruption",
+   "description": "Corrupted communication frame received from charger controller.",
+   "severity": "WARNING",
+   "component": "CHARGER",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "chargeControlTimeoutError",
+   "title": "Charge Control Timeout",
+   "description": "Charger control loop message timeout between BMS and charger.",
+   "severity": "WARNING",
+   "component": "CHARGER",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "fastChargeTimeoutError",
+   "title": "Fast Charge Communication Timeout",
+   "description": "Hypercharger CCS/DC fast charge protocol timeout.",
+   "severity": "WARNING",
+   "component": "CHARGER",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "chargerReauthError",
+   "title": "Charger Security Re-Authentication Error",
+   "description": "Failed security re-handshake with charger station.",
+   "severity": "WARNING",
+   "component": "CHARGER",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "fastChargingSystemError",
+   "title": "Fast Charging System Error",
+   "description": "Internal DC fast charge power conversion or relay failure.",
+   "severity": "CRITICAL",
+   "component": "CHARGER",
+   "fixable": false,
+   "postFixMessage": null
+  },
+  {
+   "id": "airplane_mode",
+   "title": "Airplane Mode Active",
+   "description": "Vehicle is stuck in Airplane Mode, disabling cellular cloud sync. Causes 'Sleeping' state in Ola app.",
+   "severity": "CRITICAL",
+   "component": "VCU",
+   "fixable": true,
+   "postFixMessage": null
+  },
+  {
+   "id": "drive_mode_restriction",
+   "title": "Drive Modes Restricted",
+   "description": "Drive mode selection (Sports, Hyper) is restricted by the system.",
+   "severity": "CRITICAL",
+   "component": "VCU",
+   "fixable": true,
+   "postFixMessage": "Your scooter may reboot"
+  }
+ ]
+}

@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.grpc.Attributes;
 import io.grpc.CallOptions;
+import io.grpc.Context;
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -37,9 +38,11 @@ import io.grpc.stub.ClientCalls;
  * hands the JVM's own {@link InetAddress} to the channel. The target looks like
  * {@code olatool:///<hex host>/<port>}, which keeps the URI parser happy.
  *
- * <p>2. Reading CAN uses {@code ReadCanFrame}, one frame per call, never the
- * server streams. A deadline on a stream is what wedges the daemon (see
- * docs/05-can-bus.md); a deadline on a unary call just returns an error.
+ * <p>2. Reading CAN uses {@code ReadCanStream}, a server stream with no
+ * deadline. A deadline on a stream is what wedges the daemon (see
+ * docs/05-can-bus.md), so the stream is cancelled through a gRPC
+ * {@link Context} instead. The older unary {@code ReadCanFrame} loop is still
+ * here as a fallback.
  */
 public final class Rpc implements Closeable {
 
@@ -132,6 +135,21 @@ public final class Rpc implements Closeable {
         return md;
     }
 
+    private MethodDescriptor<byte[], byte[]> streamDescriptor(String method) {
+        String key = method + "#stream";
+        MethodDescriptor<byte[], byte[]> md = descriptors.get(key);
+        if (md == null) {
+            md = MethodDescriptor.<byte[], byte[]>newBuilder()
+                    .setType(MethodDescriptor.MethodType.SERVER_STREAMING)
+                    .setFullMethodName(SERVICE + "/" + method)
+                    .setRequestMarshaller(BYTES)
+                    .setResponseMarshaller(BYTES)
+                    .build();
+            descriptors.put(key, md);
+        }
+        return md;
+    }
+
     private static String friendly(StatusRuntimeException e) {
         Status.Code code = e.getStatus().getCode();
         switch (code) {
@@ -215,11 +233,97 @@ public final class Rpc implements Closeable {
                 Msg.canPacket(Can.frame(canId, data8)), DEFAULT_TIMEOUT_MS));
     }
 
+    // -------------------------------------------------------------- streaming
+
+    /** Where streamed frames go. Called on the stream thread, never the UI. */
+    public interface FrameSink {
+        void frame(Can.Frame frame);
+
+        /** The stream stopped on its own or with an error. */
+        void ended(String reason);
+    }
+
+    /** Handle for stopping a stream. Safe to close twice. */
+    public static final class Cancel implements Closeable {
+        private final Context.CancellableContext context;
+        private volatile boolean closed;
+
+        Cancel(Context.CancellableContext context) {
+            this.context = context;
+        }
+
+        @Override
+        public void close() {
+            if (closed) {
+                return;
+            }
+            closed = true;
+            context.cancel(null);
+        }
+    }
+
+    /**
+     * {@code ReadCanStream}: the daemon pushes every frame it sees.
+     *
+     * <p>No deadline is set on purpose. The call is cancelled with
+     * {@link Cancel#close()}, which tears the RPC down without a deadline
+     * error and without leaving the daemon wedged.
+     */
+    public Cancel streamCanFrames(FrameSink sink) {
+        return stream("ReadCanStream", sink);
+    }
+
+    /** {@code CanDumpStream}: the same push, from the raw dump path. */
+    public Cancel dumpCanFrames(FrameSink sink) {
+        return stream("CanDumpStream", sink);
+    }
+
+    private Cancel stream(final String method, final FrameSink sink) {
+        final Context.CancellableContext context = Context.current().withCancellation();
+        final MethodDescriptor<byte[], byte[]> md = streamDescriptor(method);
+        Thread worker = new Thread(() -> context.run(() -> {
+            String reason = "stream closed";
+            try {
+                java.util.Iterator<byte[]> it = ClientCalls.blockingServerStreamingCall(
+                        channel, md, CallOptions.DEFAULT, new byte[0]);
+                while (it.hasNext()) {
+                    Can.Frame f = Can.Frame.parse(Msg.canFrame(it.next()));
+                    if (f != null) {
+                        sink.frame(f);
+                    }
+                }
+            } catch (StatusRuntimeException e) {
+                reason = friendly(e);
+            } catch (RuntimeException e) {
+                reason = e.getMessage() == null ? e.toString() : e.getMessage();
+            } finally {
+                context.cancel(null);
+                sink.ended(reason);
+            }
+        }), "ola-can-" + method);
+        worker.setDaemon(true);
+        worker.start();
+        return new Cancel(context);
+    }
+
     // ------------------------------------------------------------ vehicle ops
 
     /** Read-only. Nothing is written by this call. */
     public Msg.OpMode vehicleOperationMode() {
         return Msg.opMode(call("GetVehicleOperationMode", new byte[0], DEFAULT_TIMEOUT_MS));
+    }
+
+    /**
+     * The manifest JSON the vehicle reports about itself. Read-only, and the
+     * only place the app gets a VIN from.
+     */
+    public String vehicleIdentifiers(long timeoutMs) {
+        return Msg.vehicleIdentifiers(
+                call("GetVehicleIdentifiers", new byte[0], timeoutMs));
+    }
+
+    public String vehicleIdentifiers() {
+        return vehicleIdentifiers(DEFAULT_TIMEOUT_MS);
     }
 
     /** Network mode: the {@code cust} / {@code serv} property. Reversible. */

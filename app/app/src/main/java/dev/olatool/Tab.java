@@ -2,7 +2,7 @@ package dev.olatool;
 
 import android.view.View;
 
-/** One of the five screens. */
+/** One of the screens. */
 public interface Tab {
     View view();
 

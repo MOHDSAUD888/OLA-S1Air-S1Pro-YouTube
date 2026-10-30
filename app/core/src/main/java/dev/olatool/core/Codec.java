@@ -52,4 +52,49 @@ public final class Codec {
         }
         return sb.toString();
     }
+
+    /** Standard base64 back to bytes. Padding is optional, whitespace is not. */
+    public static byte[] unbase64(String text) {
+        String s = text.trim();
+        int outLength = s.length() * 3 / 4;
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream(outLength);
+        int buffer = 0;
+        int bits = 0;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '=') {
+                break;
+            }
+            int value = indexOfB64(c);
+            if (value < 0) {
+                throw new IllegalArgumentException("not base64: '" + c + "'");
+            }
+            buffer = (buffer << 6) | value;
+            bits += 6;
+            if (bits >= 8) {
+                bits -= 8;
+                out.write((buffer >> bits) & 0xFF);
+            }
+        }
+        return out.toByteArray();
+    }
+
+    private static int indexOfB64(char c) {
+        if (c >= 'A' && c <= 'Z') {
+            return c - 'A';
+        }
+        if (c >= 'a' && c <= 'z') {
+            return c - 'a' + 26;
+        }
+        if (c >= '0' && c <= '9') {
+            return c - '0' + 52;
+        }
+        if (c == '+') {
+            return 62;
+        }
+        if (c == '/') {
+            return 63;
+        }
+        return -1;
+    }
 }

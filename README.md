@@ -441,15 +441,28 @@ what you will read here — including why the dash cannot unlock a sleeping scoo
 
 ## The Android app
 
-Five screens, one APK, one address to type. Source in [`app/`](app).
+Nine screens, one APK, one address to type. Source in [`app/`](app).
 
 | Screen | What it does |
 |---|---|
-| Battery | pack health, all 14 cells, motor, `0x683` safety flags — live from CAN |
+| Battery | pack health, all 14 cells, ride, charging, `0x683` safety flags — live from CAN |
+| Signals | the whole decoded signal table, searchable, live |
+| Faults | active, latched and simulated faults, plus all 194 known rows |
+| Log | the raw frame log and the busiest ids |
 | Settings | opens the real Android screens on the dash (`am start`, never a tap) |
-| ADB | a root shell over gRPC, pipes and flags work |
+| ADB | a root shell over gRPC, plus reversible wireless ADB |
 | Mode | Customer / Service, plus the vehicle mode read-only |
 | TechPack | `TechPackUpdate` demo — may do nothing, see doc 12 |
+| Dev | connection state and local-only switches |
+
+All the live screens read one shared `ReadCanStream` owned by `Bus.java`, fanned
+out ten times a second. A screen only listens while it is visible, so switching
+tabs does not restart or split the stream.
+
+The signal table and the 194 fault rows are data files from
+[Axiom](https://codeberg.org/pitzel/axiom), which is Apache-2.0. No Axiom code is
+used, and there is no Shizuku dependency — this app already has root through the
+scooter's own daemon. Attribution is in [`THIRD-PARTY.md`](THIRD-PARTY.md).
 
 You type the scooter's **IPv4**; the app dials **IPv6**. That is not cosmetic:
 in customer mode the scooter drops TCP 50005 and 5555 over IPv4, so an IPv4
@@ -492,7 +505,7 @@ Full detail, including why each screen is written the way it is:
 | 09 | [Security findings](docs/09-security-findings.md) | The clean list, with severity and proof |
 | 10 | [How to do REA](docs/10-how-to-do-rea.md) | The method, tools, and traps |
 | 11 | [Glossary](docs/11-glossary.md) | Plain-word definitions |
-| 12 | [Android app](docs/12-android-app.md) | The five-screen APK, IPv4 in / IPv6 out, build |
+| 12 | [Android app](docs/12-android-app.md) | The nine-screen APK, IPv4 in / IPv6 out, build |
 
 Scripts:
 

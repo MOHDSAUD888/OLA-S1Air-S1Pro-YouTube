@@ -6,21 +6,19 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import dev.olatool.core.Can;
-import dev.olatool.core.Rpc;
+import dev.olatool.core.Live;
 
 /**
- * Battery health, decoded from the CAN bus.
+ * Battery health, from the shared stream.
  *
- * <p>Reads with {@code Init(Register)} followed by repeated unary
- * {@code ReadCanFrame}. A timeout means "the bus is quiet for a moment", which
- * is normal and harmless; the streams are avoided because a deadline on one of
- * those wedges the daemon.
+ * <p>This used to read frames itself with unary {@code ReadCanFrame}. It now
+ * listens to {@link Bus}, so the pack, the motor and the fault screen all see
+ * the same frames instead of competing for them.
  */
 public final class BatteryTab implements Tab {
 
     private final MainActivity activity;
-    private final Conn conn;
+    private final Bus bus;
     private final ScrollView page;
 
     private final TextView verdict;
@@ -29,31 +27,43 @@ public final class BatteryTab implements Tab {
     private final Button liveButton;
 
     private final Ui.Kv soc;
-    private final Ui.Kv displaySoc;
     private final Ui.Kv soh;
     private final Ui.Kv volts;
     private final Ui.Kv amps;
     private final Ui.Kv power;
     private final Ui.Kv temp;
-    private final Ui.Kv tempRange;
     private final Ui.Kv cellMin;
     private final Ui.Kv cellMax;
     private final Ui.Kv spread;
-    private final Ui.Kv mcu;
-    private final Ui.Kv motor;
+
+    private final Ui.Kv speed;
+    private final Ui.Kv range;
+    private final Ui.Kv mode;
     private final Ui.Kv rpm;
     private final Ui.Kv odo;
+
+    private final Ui.Kv charging;
+    private final Ui.Kv plugged;
+    private final Ui.Kv chargeRate;
+    private final Ui.Kv cycles;
+
     private final Ui.Kv fall;
     private final Ui.Kv tow;
     private final Ui.Kv regen;
     private final Ui.Kv hill;
 
-    private volatile boolean wanted;
-    private volatile Thread reader;
+    private boolean live;
+    private boolean visible;
 
-    public BatteryTab(MainActivity activity, Conn conn) {
+    private final Bus.Listener listener = snapshot -> {
+        if (visible && live) {
+            render(snapshot);
+        }
+    };
+
+    public BatteryTab(MainActivity activity, Conn conn, Bus bus) {
         this.activity = activity;
-        this.conn = conn;
+        this.bus = bus;
         this.page = Ui.page(activity);
         LinearLayout body = Ui.body(page);
 
@@ -64,19 +74,17 @@ public final class BatteryTab implements Tab {
         hint.setPadding(0, Ui.dp(activity, 4), 0, Ui.dp(activity, 10));
         body.addView(hint);
 
-        liveButton = Ui.accent(activity, "Start live", v -> toggle());
+        liveButton = Ui.accent(activity, "Stop live", v -> toggle());
         body.addView(liveButton);
 
         LinearLayout pack = Ui.card(activity);
         pack.addView(Ui.heading(activity, "Pack"));
         soc = add(pack, "State of charge");
-        displaySoc = add(pack, "Display SOC");
         soh = add(pack, "State of health");
         volts = add(pack, "Voltage");
         amps = add(pack, "Current");
         power = add(pack, "Power");
         temp = add(pack, "Pack temperature");
-        tempRange = add(pack, "Temperature min / max");
         cellMin = add(pack, "Cell minimum");
         cellMax = add(pack, "Cell maximum");
         spread = add(pack, "Cell spread");
@@ -88,13 +96,22 @@ public final class BatteryTab implements Tab {
         cells.addView(cellsLine);
         body.addView(cells, margin());
 
-        LinearLayout drive = Ui.card(activity);
-        drive.addView(Ui.heading(activity, "Motor and body"));
-        mcu = add(drive, "MCU temperature");
-        motor = add(drive, "Motor temperature");
-        rpm = add(drive, "Motor speed");
-        odo = add(drive, "Odometer");
-        body.addView(drive, margin());
+        LinearLayout ride = Ui.card(activity);
+        ride.addView(Ui.heading(activity, "Ride"));
+        speed = add(ride, "Speed");
+        range = add(ride, "Range");
+        mode = add(ride, "Drive mode");
+        rpm = add(ride, "Motor speed");
+        odo = add(ride, "Odometer");
+        body.addView(ride, margin());
+
+        LinearLayout charge = Ui.card(activity);
+        charge.addView(Ui.heading(activity, "Charging"));
+        charging = add(charge, "Charging");
+        plugged = add(charge, "Charger plugged in");
+        chargeRate = add(charge, "Charging rate");
+        cycles = add(charge, "Cycle count");
+        body.addView(charge, margin());
 
         LinearLayout safety = Ui.card(activity);
         safety.addView(Ui.heading(activity, "Safety state (0x683)"));
@@ -133,135 +150,88 @@ public final class BatteryTab implements Tab {
 
     @Override
     public void onShow() {
-        if (conn.ready()) {
-            startLive();
+        visible = true;
+        bus.attach(listener);
+        live = true;
+        liveButton.setText("Stop");
+        if (bus.snapshot() != null) {
+            render(bus.snapshot());
         } else {
-            hint.setText("Connect to the scooter first.");
+            hint.setText(bus.state());
         }
     }
 
     @Override
     public void onHide() {
-        stopLive();
+        visible = false;
+        bus.detach(listener);
     }
 
     private void toggle() {
-        if (wanted) {
-            stopLive();
-        } else if (conn.ready()) {
-            startLive();
-        } else {
-            hint.setText("Connect to the scooter first.");
-        }
-    }
-
-    private void startLive() {
-        if (!conn.ready()) {
-            return;
-        }
-        wanted = true;
-        liveButton.setText("Stop");
-        hint.setText("Reading CAN ...");
-        ensureReader();
-    }
-
-    /**
-     * Starts the reader unless one is still winding down. A reader can sit in a
-     * 1.2 s ReadCanFrame call, and two readers would steal frames from each
-     * other, so this waits instead of spawning a second one.
-     */
-    private void ensureReader() {
-        if (!wanted || !conn.ready()) {
-            return;
-        }
-        if (reader != null) {
-            page.postDelayed(this::ensureReader, 300);
-            return;
-        }
-        final Rpc rpc = conn.rpc();
-        reader = new Thread(() -> {
-            Can.Snapshot snap = new Can.Snapshot();
-            try {
-                rpc.initCan(Can.BATTERY_IDS);
-                long lastPost = 0;
-                while (wanted && conn.rpc() == rpc) {
-                    byte[] raw = rpc.readCanFrame(1200);
-                    if (raw != null) {
-                        Can.Frame frame = Can.Frame.parse(raw);
-                        if (frame != null) {
-                            synchronized (snap) {
-                                snap.apply(frame);
-                            }
-                        }
-                    }
-                    long now = System.currentTimeMillis();
-                    if (now - lastPost > 800) {
-                        lastPost = now;
-                        final Can.Snapshot shown = snap;
-                        conn.post(() -> {
-                            synchronized (shown) {
-                                render(shown);
-                            }
-                        });
-                    }
-                }
-            } catch (Exception e) {
-                conn.post(() -> hint.setText("Read stopped: " + e.getMessage()));
-            } finally {
-                reader = null;
+        live = !live;
+        liveButton.setText(live ? "Stop" : "Start live");
+        if (live) {
+            bus.attach(listener);
+            if (bus.snapshot() != null) {
+                render(bus.snapshot());
             }
-        }, "can-reader");
-        reader.setDaemon(true);
-        reader.start();
-    }
-
-    private void stopLive() {
-        wanted = false;
-        liveButton.setText("Start live");
+        } else {
+            bus.detach(listener);
+        }
     }
 
     // --------------------------------------------------------------- render
 
-    private void render(Can.Snapshot s) {
-        if (s.frames == 0) {
+    private void render(Live.Snapshot s) {
+        if (s == null) {
+            hint.setText(bus.state());
+            return;
+        }
+        if (s.empty()) {
             verdict.setText("No frames yet");
             verdict.setTextColor(Ui.DIM);
             hint.setText("The bus is silent. The vehicle is probably asleep — press the "
                     + "red start button or plug in the charger.");
         } else {
-            String health = s.sohVerdict();
+            String health = sohVerdict(s.soh);
             verdict.setText("Pack: " + health);
             verdict.setTextColor(healthColor(health));
-            hint.setText("Frames read: " + s.frames);
+            hint.setText("Frames " + s.frames + "   " + s.pps + "/s   "
+                    + s.messagesSeen + " messages   " + s.signalsSeen + " signals");
         }
 
         soc.set(Ui.pct(s.soc));
-        displaySoc.set(Ui.pct(s.displaySoc));
-        soh.set(Ui.pct(s.soh) + "  " + s.sohVerdict());
-        volts.set(Ui.fmt(s.volts, 2) + " V");
-        amps.set(Ui.fmt(s.amps, 2) + " A");
+        soh.set(Ui.pct(s.soh) + "  " + sohVerdict(s.soh));
+        volts.set(Ui.fmt(s.packV, 2) + " V");
+        amps.set(Ui.fmt(s.packA, 2) + " A");
         power.set(Ui.fmt(s.powerW() / 1000.0, 2) + " kW");
-        temp.set(Ui.fmt(s.packTemp, 1) + " °C");
-        tempRange.set(Ui.fmt(s.tempMin, 1) + " / " + Ui.fmt(s.tempMax, 1) + " °C");
-        cellMin.set(Ui.fmt(s.cellMinMv, 0) + " mV");
-        cellMax.set(Ui.fmt(s.cellMaxMv, 0) + " mV");
-        spread.set(Ui.fmt(s.cellSpreadMv(), 0) + " mV  " + s.cellSpreadVerdict(),
-                healthColor(s.cellSpreadVerdict()));
+        temp.set(Ui.fmt(s.packC, 1) + " °C");
+        cellMin.set(Ui.fmt(s.cellMinV * 1000.0, 0) + " mV");
+        cellMax.set(Ui.fmt(s.cellMaxV * 1000.0, 0) + " mV");
+        spread.set(Ui.fmt(s.cellSpreadV() * 1000.0, 0) + " mV  "
+                + spreadVerdict(s.cellSpreadV() * 1000.0),
+                healthColor(spreadVerdict(s.cellSpreadV() * 1000.0)));
 
-        mcu.set(Ui.fmt(s.mcuTemp, 1) + " °C");
-        motor.set(Ui.fmt(s.motorTemp, 1) + " °C");
+        speed.set(Ui.fmt(s.speedKph, 1) + " km/h");
+        range.set(Ui.fmt(s.rangeKm, 0) + " km");
+        mode.set(s.driveMode.isEmpty() ? "-" : s.driveMode);
         rpm.set(Ui.fmt(s.rpm, 0) + " rpm");
-        odo.set(Ui.fmt(s.odoMeters / 1000.0, 1) + " km");
+        odo.set(Ui.fmt(s.odoKm, 1) + " km");
+
+        charging.set(tri(s.charging));
+        plugged.set(tri(s.plugged));
+        chargeRate.set(Ui.fmt(s.chargeRate, 0) + " %");
+        cycles.set(Ui.fmt(s.cycles, 0));
 
         fall.set(s.fallName());
         tow.set(s.towName());
         regen.set(s.regenName());
-        hill.set(s.hillHoldName());
+        hill.set(s.hillName());
 
         cellsLine.setText(cellList(s));
     }
 
-    private static String cellList(Can.Snapshot s) {
+    private static String cellList(Live.Snapshot s) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < s.cells.length; i++) {
             if (Double.isNaN(s.cells[i]) || s.cells[i] <= 0) {
@@ -270,9 +240,43 @@ public final class BatteryTab implements Tab {
             if (sb.length() > 0) {
                 sb.append("   ");
             }
-            sb.append(i + 1).append(": ").append((int) s.cells[i]);
+            sb.append(i + 1).append(": ").append((int) (s.cells[i] * 1000.0));
         }
         return sb.length() == 0 ? "-" : sb.toString();
+    }
+
+    private static String tri(int value) {
+        if (value < 0) {
+            return "-";
+        }
+        return value == 1 ? "yes" : "no";
+    }
+
+    /** Same thresholds the old snapshot used. */
+    private static String sohVerdict(double soh) {
+        if (Double.isNaN(soh)) {
+            return "no reading";
+        }
+        if (soh >= 90) {
+            return "healthy";
+        }
+        if (soh >= 80) {
+            return "watch";
+        }
+        return "degraded";
+    }
+
+    private static String spreadVerdict(double millivolts) {
+        if (Double.isNaN(millivolts)) {
+            return "no reading";
+        }
+        if (millivolts < 30) {
+            return "healthy";
+        }
+        if (millivolts < 60) {
+            return "watch";
+        }
+        return "large";
     }
 
     private static int healthColor(String verdict) {

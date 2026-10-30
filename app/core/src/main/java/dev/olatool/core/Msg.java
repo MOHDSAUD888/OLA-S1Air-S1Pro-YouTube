@@ -44,6 +44,24 @@ public final class Msg {
         return new Proto.Writer().string(1, type).toByteArray();
     }
 
+    /**
+     * {@code VehicleIdentifiers{string manifest_json = 1}}.
+     *
+     * <p>The daemon answers with one JSON blob. It is returned as text rather
+     * than parsed here, because the app only shows it.
+     */
+    public static String vehicleIdentifiers(byte[] raw) {
+        Proto.Reader r = new Proto.Reader(raw);
+        while (r.hasMore()) {
+            int field = r.tag();
+            if (field == 1 && r.wire() == Proto.WIRE_LENGTH) {
+                return r.string();
+            }
+            r.skip(r.wire());
+        }
+        return "";
+    }
+
     // ------------------------------------------------------------- responses
 
     /** {@code Response{RespStatus status = 1; string status_msg = 2}} */

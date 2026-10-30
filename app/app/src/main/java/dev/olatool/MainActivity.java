@@ -12,33 +12,39 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import dev.olatool.core.Addr;
 
 /**
- * The shell: an address field, a Connect button, five tabs.
+ * The shell: an address field, a Connect button, and the tabs.
  *
  * <p>Everything the user types is an IPv4 address. {@link Net} turns that into
  * an IPv6 connection, which is the only link that survives a switch to customer
- * mode.
+ * mode. That discovery is deliberately unchanged.
  */
 public final class MainActivity extends Activity {
 
     private static final int REQ_LOCATION = 41;
     private static final String PREFS = "ola";
     private static final String KEY_ADDRESS = "address";
-    private static final String[] TAB_NAMES = {"Battery", "Settings", "ADB", "Mode", "TechPack"};
+    private static final String[] TAB_NAMES = {
+            "Battery", "Signals", "Faults", "Log", "Settings",
+            "ADB", "Mode", "TechPack", "Dev"
+    };
 
     private final Conn conn = new Conn();
     private final Tab[] tabs = new Tab[TAB_NAMES.length];
     private final Button[] tabButtons = new Button[TAB_NAMES.length];
 
+    private Bus bus;
     private EditText address;
     private Button connectButton;
     private TextView status;
     private FrameLayout content;
+    private HorizontalScrollView barScroll;
     private int current = -1;
     private String pendingAddress;
 
@@ -46,11 +52,17 @@ public final class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        tabs[0] = new BatteryTab(this, conn);
-        tabs[1] = new SettingsTab(this, conn);
-        tabs[2] = new AdbTab(this, conn);
-        tabs[3] = new ModeTab(this, conn);
-        tabs[4] = new TechPackTab(this, conn);
+        bus = new Bus(this, conn);
+
+        tabs[0] = new BatteryTab(this, conn, bus);
+        tabs[1] = new SignalsTab(this, conn, bus);
+        tabs[2] = new FaultsTab(this, conn, bus);
+        tabs[3] = new LogTab(this, conn, bus);
+        tabs[4] = new SettingsTab(this, conn);
+        tabs[5] = new AdbTab(this, conn);
+        tabs[6] = new ModeTab(this, conn);
+        tabs[7] = new TechPackTab(this, conn);
+        tabs[8] = new DevTab(this, conn, bus);
 
         setContentView(buildRoot());
         selectTab(0);
@@ -64,6 +76,9 @@ public final class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (bus != null) {
+            bus.stop();
+        }
         conn.close();
         super.onDestroy();
     }
@@ -113,6 +128,9 @@ public final class MainActivity extends Activity {
 
         root.addView(header);
 
+        barScroll = new HorizontalScrollView(this);
+        barScroll.setHorizontalScrollBarEnabled(false);
+        barScroll.setBackgroundColor(Ui.BG);
         LinearLayout bar = Ui.row(this);
         bar.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), Ui.dp(this, 6));
         for (int i = 0; i < TAB_NAMES.length; i++) {
@@ -123,14 +141,18 @@ public final class MainActivity extends Activity {
             b.setTextSize(12);
             b.setMinWidth(0);
             b.setMinimumWidth(0);
-            b.setPadding(0, Ui.dp(this, 8), 0, Ui.dp(this, 8));
+            b.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 8));
             b.setBackgroundColor(Color.TRANSPARENT);
             b.setOnClickListener(v -> selectTab(index));
             tabButtons[i] = b;
-            bar.addView(b, new LinearLayout.LayoutParams(0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            bar.addView(b, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
         }
-        root.addView(bar);
+        barScroll.addView(bar, new HorizontalScrollView.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        root.addView(barScroll);
 
         View divider = new View(this);
         divider.setBackgroundColor(Ui.LINE);
@@ -160,6 +182,9 @@ public final class MainActivity extends Activity {
             tabButtons[i].setTypeface(null,
                     i == index ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
         }
+        final Button chosen = tabButtons[index];
+        barScroll.post(() -> barScroll.smoothScrollTo(
+                Math.max(0, chosen.getLeft() - Ui.dp(this, 24)), 0));
         tabs[index].onShow();
     }
 
@@ -220,6 +245,7 @@ public final class MainActivity extends Activity {
             try {
                 Net.Result result = Net.connect(getApplicationContext(), typed, 4000);
                 conn.install(result.rpc, result.target, result.ipv6, result.note);
+                bus.start();
                 runOnUiThread(() -> {
                     connectButton.setEnabled(true);
                     connectButton.setText("Reconnect");

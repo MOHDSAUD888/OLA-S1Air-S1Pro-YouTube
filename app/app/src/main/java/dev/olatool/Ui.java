@@ -9,7 +9,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-/** Small helpers so the five screens do not repeat styling code. */
+/** Small helpers so the screens do not repeat styling code. */
 public final class Ui {
 
     public static final int BG = 0xFF0E1116;
