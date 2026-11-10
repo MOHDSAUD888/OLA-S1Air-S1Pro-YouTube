@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚡ Ola S1 / S1 Pro — Head Unit Reverse Engineering
+# ⚡ Ola S1 Air / S1 Pro — Head Unit Reverse Engineering
 
 **Root the dashboard over IPv6 · read the whole CAN bus · open Android on the dash.**
 
@@ -8,6 +8,7 @@ _No flashing. No keys. No cloud. Your own scooter only._
 
 <br/>
 
+![Tested on](https://img.shields.io/badge/tested%20on-Ola%20S1%20Air%20%C2%B7%20S1%20Pro-ff6a00?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-0a7bbb?style=flat-square)
 ![App](https://img.shields.io/badge/app-Android%20(Java)%20%2B%20Python-3DDC84?style=flat-square&logo=android&logoColor=white)
 ![Access](https://img.shields.io/badge/access-root%20via%20gRPC%20over%20IPv6-c0392b?style=flat-square)
@@ -19,9 +20,10 @@ _No flashing. No keys. No cloud. Your own scooter only._
 
 ---
 
-Notes from taking apart the dashboard of an Ola S1 (E2 platform, software `5.6.1`).
-This is a lab notebook, not a product. Everything here was done on an owner's own
-scooter, over the local network, with no flashing and no partition writes.
+Notes from taking apart the dashboard of an Ola S1 — **tested on the S1 Air and
+S1 Pro** (E2 platform, software `5.6.1`). This is a lab notebook, not a product.
+Everything here was done on an owner's own scooter, over the local network, with
+no flashing and no partition writes.
 
 **What you get:** a root shell on the dashboard over IPv6, a one-click script that
 opens Android Settings on the scooter, the full CAN map, the HMI architecture, and
