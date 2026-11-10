@@ -2,7 +2,7 @@
 
 # ⚡ Ola S1 Air / S1 Pro — Head Unit Reverse Engineering
 
-**Root the dashboard over IPv6 · read the whole CAN bus · open Android on the dash.**
+**▶️ Run YouTube on the dash — root it over IPv6, read the whole CAN bus, open Android on the screen.**
 
 _No flashing. No keys. No cloud. Your own scooter only._
 
@@ -15,6 +15,19 @@ _No flashing. No keys. No cloud. Your own scooter only._
 ![Method](https://img.shields.io/badge/method-no%20flashing%20%C2%B7%20no%20partition%20writes-2ecc71?style=flat-square)
 ![Secrets](https://img.shields.io/badge/secrets-none%20in%20repo-999?style=flat-square&logo=githubactions&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square)
+
+<br/>
+
+### ▶️ Featured — YouTube, playing on the scooter's dashboard
+
+The dash is Android under the hood. With the root access this repo documents, it
+runs ordinary apps — so it plays **full-screen YouTube** on the same screen that
+normally only shows speed, battery and maps. &nbsp;[**See how →**](#youtube-on-the-dashboard)
+
+<!-- 📸 THE money shot: drop a photo or GIF of YouTube on the dash right here.
+     Save it to docs/img/ and uncomment:
+<img src="docs/img/youtube-on-dash.jpg" width="680" alt="YouTube playing on the Ola S1 dashboard">
+-->
 
 </div>
 
@@ -39,6 +52,7 @@ own adb key. Nothing here can impersonate a vehicle or a cloud account.
 
 ## Contents
 
+- [**▶️ YouTube on the dashboard**](#youtube-on-the-dashboard) — the headline: real YouTube on the S1 screen
 - [**Get the repo on any platform**](#get-the-repo-on-any-platform) — clone & set up on Windows / Linux / macOS
 - [**Repository layout**](#repository-layout) — the folder tree, explained
 - [The short version](#the-short-version) — the one trick, in a paragraph
@@ -49,6 +63,34 @@ own adb key. Nothing here can impersonate a vehicle or a cloud account.
 - [Docs](#docs) — the deep-dive notebook (12 topics)
 - [What is proven, and what is not](#what-is-proven-and-what-is-not)
 - [Safety](#safety) · [Legal](#legal) · [License](#license)
+
+---
+
+<a id="youtube-on-the-dashboard"></a>
+
+## ▶️ YouTube on the dashboard
+
+The headline hack: **real YouTube, full-screen on the Ola S1's dash** — the same
+screen that normally only shows speed, battery and maps. The dashboard is Android
+under the HMI, so once you have root and adb it runs ordinary apps.
+
+Two ways, both built on the root access documented here:
+
+- **`olatube` overlay** — [`app/overlay`](app/overlay). A floating web player
+  (`WebPlayerService` / `OverlayService`) with an accessibility helper
+  (`YtAccessibilityService`) that starts on boot (`BootReceiver`) and draws over
+  the HMI. One-time setup via `SetupActivity`.
+- **SmartTube + picture-in-picture** — a sideloaded YouTube client (e.g. SmartTube)
+  running in a PIP window, for a native-app feel.
+
+> **How it's possible:** the dash is a normal Android head unit sitting behind
+> Ola's HMI. Get root + adb with the [walkthrough below](#how-to-do-it-yourself--zero-to-real-adb),
+> and it will launch and draw any Android app you install — YouTube included.
+
+<!-- 📸 A photo or GIF of YouTube playing on the dash is the single best thing you
+     can add here. Save it to docs/img/ and embed it, e.g.:
+<p align="center"><img src="docs/img/youtube-on-dash.jpg" width="680" alt="YouTube playing on the Ola S1 dashboard"></p>
+-->
 
 ---
 
