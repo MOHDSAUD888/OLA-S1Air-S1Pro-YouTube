@@ -7,6 +7,19 @@
     <!-- Only used to read the Wi-Fi BSSID, which is how the scooter's IPv6
          address is derived. Denying it is fine: the app falls back to IPv4. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Low-battery / charge-complete alerts (Android 13+ asks at runtime). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Bluetooth pairing/inspection. New split perms on Android 12+ (asked at
+         runtime); legacy perms for Android 11 and below. neverForLocation keeps
+         BLE scanning from requiring location on 12+. -->
+    <uses-permission android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
     <application
         android:allowBackup="false"

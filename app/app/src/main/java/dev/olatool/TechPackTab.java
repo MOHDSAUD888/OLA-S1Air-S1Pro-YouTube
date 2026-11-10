@@ -35,15 +35,11 @@ public final class TechPackTab implements Tab {
         this.page = Ui.page(activity);
         LinearLayout body = Ui.body(page);
 
-        body.addView(Ui.text(activity, "TechPack", 18, Ui.TEXT));
-
-        TextView note = Ui.note(activity,
+        body.addView(Ui.pageTitle(activity, "TechPack",
                 "This calls TechPackUpdate on the scooter's daemon. The call exists and "
                         + "the Ola manufacturing app uses it, but the value the type field "
                         + "expects was not recoverable from the device. In this demo it may "
-                        + "simply do nothing.");
-        note.setPadding(0, Ui.dp(activity, 4), 0, Ui.dp(activity, 12));
-        body.addView(note);
+                        + "simply do nothing."));
 
         LinearLayout card = Ui.card(activity);
         card.addView(Ui.heading(activity, "ConfigType.type"));
@@ -90,12 +86,8 @@ public final class TechPackTab implements Tab {
 
         body.addView(Ui.accent(activity, "Send TechPackUpdate", v -> send()), topMargin(10));
 
-        result = Ui.text(activity, "", 13, Ui.TEXT);
-        result.setTypeface(android.graphics.Typeface.MONOSPACE);
+        result = Ui.codeBlock(Ui.text(activity, "", 13, Ui.TEXT));
         result.setTextIsSelectable(true);
-        result.setBackground(Ui.round(activity, Ui.CARD, 10, Ui.LINE));
-        result.setPadding(Ui.dp(activity, 12), Ui.dp(activity, 10),
-                Ui.dp(activity, 12), Ui.dp(activity, 10));
         body.addView(result, topMargin(10));
 
         TextView footer = Ui.note(activity,
@@ -114,6 +106,9 @@ public final class TechPackTab implements Tab {
     }
 
     private void send() {
+        if (!Access.require(activity, Access.ADMIN)) {
+            return;
+        }
         String value = type.getText().toString();
         if (!conn.ready()) {
             show("Connect to the scooter first.", Ui.WARN);

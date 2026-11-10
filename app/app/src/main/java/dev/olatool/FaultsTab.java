@@ -62,15 +62,12 @@ public final class FaultsTab implements Tab {
         this.page = Ui.page(activity);
         LinearLayout body = Ui.body(page);
 
-        body.addView(Ui.text(activity, "Faults", 18, Ui.TEXT));
-
-        TextView note = Ui.note(activity,
+        body.addView(Ui.pageTitle(activity, "Faults",
                 "Read straight from the fault bits in the CAN stream. Nothing here is "
-                        + "written to the scooter.");
-        note.setPadding(0, Ui.dp(activity, 4), 0, Ui.dp(activity, 10));
-        body.addView(note);
+                        + "written to the scooter."));
 
         status = Ui.text(activity, "Waiting for the first frame ...", 13, Ui.DIM);
+        status.setPadding(0, 0, 0, Ui.dp(activity, 4));
         body.addView(status);
 
         activeView = section(body, "Active now", Ui.BAD);
@@ -106,8 +103,7 @@ public final class FaultsTab implements Tab {
         });
         body.addView(search);
 
-        table = Ui.text(activity, "", 11, Ui.TEXT);
-        table.setTypeface(android.graphics.Typeface.MONOSPACE);
+        table = Ui.codeBlock(Ui.text(activity, "", 11, Ui.TEXT));
         table.setTextIsSelectable(true);
         body.addView(table);
 
@@ -121,10 +117,10 @@ public final class FaultsTab implements Tab {
 
     private TextView section(LinearLayout parent, String heading, int color) {
         parent.addView(Ui.heading(activity, heading));
-        TextView view = Ui.text(activity, "-", 12, color);
+        TextView view = Ui.codeBlock(Ui.text(activity, "-", 12, color));
         view.setTextIsSelectable(true);
-        view.setPadding(0, 0, 0, Ui.dp(activity, 8));
         parent.addView(view);
+        parent.addView(Ui.space(activity, 8));
         return view;
     }
 

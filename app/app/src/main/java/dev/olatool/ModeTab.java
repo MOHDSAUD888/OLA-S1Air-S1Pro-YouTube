@@ -44,7 +44,9 @@ public final class ModeTab implements Tab {
         this.page = Ui.page(activity);
         LinearLayout body = Ui.body(page);
 
-        body.addView(Ui.text(activity, "Operation mode", 18, Ui.TEXT));
+        body.addView(Ui.pageTitle(activity, "Operation mode",
+                "Switch the scooter's network mode. Nothing here changes how it rides, "
+                        + "charges, or starts."));
 
         ipv4Warning = Ui.text(activity, "", 12, Ui.BAD);
         ipv4Warning.setPadding(0, Ui.dp(activity, 6), 0, 0);
@@ -208,6 +210,9 @@ public final class ModeTab implements Tab {
     }
 
     private void apply(String mode) {
+        if (!Access.require(activity, Access.ADMIN)) {
+            return;
+        }
         result.setText("Switching ...");
         result.setTextColor(Ui.DIM);
         conn.run(rpc -> {

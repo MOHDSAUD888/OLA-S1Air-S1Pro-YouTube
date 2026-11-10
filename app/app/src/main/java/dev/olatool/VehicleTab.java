@@ -23,7 +23,7 @@ import dev.olatool.core.VehicleInfo;
  * cached. The live numbers come from the shared {@link Bus} stream; this tab
  * never opens its own CAN stream.
  */
-final class VehicleTab implements Tab, Bus.Listener {
+final class VehicleTab implements Tab, Bus.Listener, CloudState.Listener {
 
     private static final long INFO_TTL_MS = 60_000L;
     private static final long STALE_MS = 6_000L;
@@ -31,7 +31,10 @@ final class VehicleTab implements Tab, Bus.Listener {
     private final Activity activity;
     private final Conn conn;
     private final Bus bus;
+    private final CloudState cloud;
     private final ScrollView page;
+    /** Last local panel, so a cloud update can re-render without a new tick. */
+    private PanelData lastPanel = new PanelData();
 
     private final LinearLayout banner;
     private final TextView bannerBody;
@@ -79,6 +82,7 @@ final class VehicleTab implements Tab, Bus.Listener {
         this.activity = activity;
         this.conn = conn;
         this.bus = bus;
+        this.cloud = CloudState.get(activity);
         this.connected = conn != null && conn.ready();
 
         page = Ui.page(activity);
@@ -269,6 +273,9 @@ final class VehicleTab implements Tab, Bus.Listener {
         if (info == null || System.currentTimeMillis() - infoAt > INFO_TTL_MS) {
             loadInfo(false);
         }
+        cloud.addListener(this);
+        cloud.start();
+        cloud.pollNow();
     }
 
     @Override
@@ -276,6 +283,7 @@ final class VehicleTab implements Tab, Bus.Listener {
         if (bus != null) {
             bus.detach(this);
         }
+        cloud.removeListener(this);
     }
 
     @Override
@@ -284,10 +292,17 @@ final class VehicleTab implements Tab, Bus.Listener {
         render(PanelData.from(s, bus == null ? null : bus.live()));
     }
 
+    @Override
+    public void onCloud(OlaCloud.Status status) {
+        // Re-render the last local panel; fillFromCloud() fills its gaps.
+        render(lastPanel);
+    }
+
     void render(PanelData d) {
         if (d == null) {
             d = new PanelData();
         }
+        lastPanel = d;
 
         long now = System.currentTimeMillis();
         boolean showBanner;
@@ -311,10 +326,23 @@ final class VehicleTab implements Tab, Bus.Listener {
         String mode = d.driveMode == null ? "" : d.driveMode.trim();
         Ui.pill(drivePill, mode.isEmpty() ? "PARKED" : mode, Ui.ACCENT);
 
-        Ui.set(socBig, num(d.soc, 0));
-        Ui.set(rangeBig, Double.isNaN(d.rangeKm) ? Ui.DASH
-                : Ui.fmt(d.rangeKm, 0) + " km");
-        Ui.bar(socBar, d.soc / 100.0);
+        OlaCloud.Status cs = cloud.latest();
+        boolean fromCloud = false;
+
+        double soc = d.soc;
+        if (Double.isNaN(soc) && cs != null && cs.soc != null) {
+            soc = cs.soc;              // scooter asleep: use the cloud battery
+            fromCloud = true;
+        }
+        Ui.set(socBig, num(soc, 0));
+        socBig.setTextColor(fromCloud ? Ui.INFO : Ui.TEXT);
+        Ui.bar(socBar, soc / 100.0);
+
+        double range = d.rangeKm;
+        if (Double.isNaN(range) && cs != null) {
+            range = cloudRangeKm(cs);
+        }
+        Ui.set(rangeBig, Double.isNaN(range) ? Ui.DASH : Ui.fmt(range, 0) + " km");
 
         String charging;
         if (d.charging == 1) {
@@ -323,6 +351,8 @@ final class VehicleTab implements Tab, Bus.Listener {
             charging = "PLUGGED IN";
         } else if (d.charging == 0 || d.plugged == 0) {
             charging = "NOT CHARGING";
+        } else if (cs != null && cs.charging != null) {
+            charging = cs.charging.toUpperCase(java.util.Locale.ROOT);
         } else {
             charging = Ui.DASH;
         }
@@ -462,6 +492,22 @@ final class VehicleTab implements Tab, Bus.Listener {
 
     private int dp(int value) {
         return Ui.dp(activity, value);
+    }
+
+    /** Pulls the first number out of the cloud "range" summary, as km. NaN if none. */
+    private static double cloudRangeKm(OlaCloud.Status cs) {
+        if (cs == null || cs.range == null) {
+            return Double.NaN;
+        }
+        java.util.regex.Matcher m =
+                java.util.regex.Pattern.compile("[0-9]+(\\.[0-9]+)?").matcher(cs.range);
+        if (m.find()) {
+            try {
+                return Double.parseDouble(m.group());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return Double.NaN;
     }
 
     private static void renderRange(RangeTile tile, double value, double max) {

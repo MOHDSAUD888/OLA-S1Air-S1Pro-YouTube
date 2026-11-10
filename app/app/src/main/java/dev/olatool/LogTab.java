@@ -50,26 +50,20 @@ public final class LogTab implements Tab {
         this.page = Ui.page(activity);
         LinearLayout body = Ui.body(page);
 
-        body.addView(Ui.text(activity, "Frame log", 18, Ui.TEXT));
-
-        TextView note = Ui.note(activity,
+        body.addView(Ui.pageTitle(activity, "Frame log",
                 "Every frame the daemon pushes, newest first. This is the same stream "
-                        + "the other screens read, so opening this tab does not disturb them.");
-        note.setPadding(0, Ui.dp(activity, 4), 0, Ui.dp(activity, 10));
-        body.addView(note);
+                        + "the other screens read, so opening this tab does not disturb them."));
 
         status = Ui.text(activity, "Waiting for the first frame ...", 13, Ui.DIM);
         body.addView(status);
 
         body.addView(Ui.heading(activity, "Busiest ids"));
-        busiest = Ui.text(activity, "-", 11, Ui.TEXT);
-        busiest.setTypeface(android.graphics.Typeface.MONOSPACE);
+        busiest = Ui.codeBlock(Ui.text(activity, "-", 11, Ui.TEXT));
         body.addView(busiest);
 
         body.addView(Ui.heading(activity, "Frames"));
 
-        log = Ui.text(activity, "", 11, Ui.TEXT);
-        log.setTypeface(android.graphics.Typeface.MONOSPACE);
+        log = Ui.codeBlock(Ui.text(activity, "", 11, Ui.TEXT));
         log.setTextIsSelectable(true);
         body.addView(log);
 

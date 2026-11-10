@@ -79,7 +79,9 @@ if ($IPv6 -match '%') {
 
 function Invoke-Ola {
     param([string[]]$Arguments)
-    & $py $ola @Arguments @common
+    # --ipv6 must precede the sub-command: `shell` uses argparse REMAINDER,
+    # which would otherwise swallow a trailing "--ipv6 <addr>" into the command.
+    & $py $ola @common @Arguments
     if ($LASTEXITCODE -ne 0) { throw "ola.py failed: $($Arguments -join ' ')" }
 }
 
@@ -126,7 +128,10 @@ mount --bind /data/local/tmp/adb_keys_mine "$T" || exit 1
 echo "bound $T"
 '@
 $tmp = Join-Path $env:TEMP "ola_bind_key.sh"
-Set-Content -Path $tmp -Value $bind -Encoding ascii -NoNewline
+# Android's sh needs LF line endings; PowerShell here-strings are CRLF, and a
+# stray \r makes `fi` parse as `fi\r` -> "unmatched 'if'". Force LF, no BOM.
+$bind = $bind -replace "`r`n", "`n"
+[System.IO.File]::WriteAllText($tmp, $bind, (New-Object System.Text.UTF8Encoding($false)))
 Write-Host "Binding the key over the factory key file ..."
 Invoke-Ola -Arguments @("push", $tmp, "/data/local/tmp/bind_key.sh")
 Invoke-Ola -Arguments @("shell", "--raw", "chmod 755 /data/local/tmp/bind_key.sh")

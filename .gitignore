@@ -42,6 +42,8 @@ venv/
 # Gradle / Android build output
 .gradle/
 build/
+bin/
+*.class
 local.properties
 keystore.properties
 *.iml
@@ -53,3 +55,17 @@ keystore.properties
 .idea/
 .DS_Store
 Thumbs.db
+
+# Local tooling & agent config — machine-specific, holds a live API key
+.claude/
+.mcp.json
+
+# Proprietary binaries & extracted bytecode — do NOT publish (copyright).
+# NOTE: the research write-ups (RESEARCH.md, SESSION_HANDOFF.md,
+# "OLA STOCK APK/OLA_CLOUD_API.md") ARE published; only the binary APK and
+# extracted code are excluded. *.apk is already ignored above.
+Clawgod/
+scooter-launcher/
+*.dex
+*.b64
+*.smali

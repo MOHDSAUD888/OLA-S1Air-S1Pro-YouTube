@@ -1,26 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A battery outline with a bolt. Vector only: no PNGs to keep in sync. -->
+<!-- Hooded skull with red eyes. Vector only: no PNGs to keep in sync. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
+    <!-- Background -->
     <path
         android:fillColor="#0E1116"
         android:pathData="M0,0h108v108h-108z" />
 
+    <!-- Hood: a near-black frame sitting behind the skull -->
     <path
-        android:fillColor="#00000000"
-        android:pathData="M30,34h44a8,8 0 0 1 8,8v28a8,8 0 0 1 -8,8h-44a8,8 0 0 1 -8,-8v-28a8,8 0 0 1 8,-8z"
-        android:strokeColor="#2FD8A8"
-        android:strokeWidth="4" />
+        android:fillColor="#07090C"
+        android:pathData="M54,12 C30,12 16,30 16,54 C16,72 24,86 34,94 C30,88 30,80 32,74 C26,66 24,58 24,50 C24,32 36,20 54,20 C72,20 84,32 84,50 C84,58 82,66 76,74 C78,80 78,88 74,94 C84,86 92,72 92,54 C92,30 78,12 54,12 Z" />
 
+    <!-- Skull: cranium, cheeks and jaw in one off-white silhouette -->
     <path
-        android:fillColor="#2FD8A8"
-        android:pathData="M74,46h4a4,4 0 0 1 4,4v12a4,4 0 0 1 -4,4h-4z" />
+        android:fillColor="#ECE7DB"
+        android:pathData="M54,22 C38,22 28,34 28,50 C28,60 32,67 37,71 L37,79 C37,83 40,86 44,86 L46,86 L46,80 L50,80 L50,86 L58,86 L58,80 L62,80 L62,86 L64,86 C68,86 71,83 71,79 L71,71 C76,67 80,60 80,50 C80,34 70,22 54,22 Z" />
 
+    <!-- Eye sockets (red) -->
     <path
-        android:fillColor="#2FD8A8"
-        android:pathData="M56,42L42,64h10l-4,16 16,-22h-10z" />
+        android:fillColor="#E5484D"
+        android:pathData="M36,50 a7.5,7.5 0 1 0 15,0 a7.5,7.5 0 1 0 -15,0 z" />
+    <path
+        android:fillColor="#E5484D"
+        android:pathData="M57,50 a7.5,7.5 0 1 0 15,0 a7.5,7.5 0 1 0 -15,0 z" />
+
+    <!-- Nose -->
+    <path
+        android:fillColor="#07090C"
+        android:pathData="M54,58 L49,67 L59,67 Z" />
+
+    <!-- Mouth seam and tooth gaps -->
+    <path
+        android:fillColor="#07090C"
+        android:pathData="M45,74 h18 v2 h-18 z" />
+    <path
+        android:fillColor="#07090C"
+        android:pathData="M53.2,74 h1.6 v11 h-1.6 z" />
 </vector>

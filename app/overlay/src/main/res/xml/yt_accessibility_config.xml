@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  We need window-state changes (to know when SmartTube is in front), global
+  actions (BACK / HOME), and canRetrieveWindowContent only to read the
+  foreground window's PACKAGE NAME on connect (to catch SmartTube if it is
+  already open). We never read on-screen text.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowsChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:notificationTimeout="100"
+    android:canRetrieveWindowContent="true"
+    android:accessibilityFlags="flagRetrieveInteractiveWindows"
+    android:description="@string/a11y_desc" />

@@ -51,13 +51,9 @@ public final class AdbTab implements Tab {
         this.page = Ui.page(activity);
         LinearLayout body = Ui.body(page);
 
-        body.addView(Ui.text(activity, "Root shell", 18, Ui.TEXT));
-
-        TextView note = Ui.note(activity,
+        body.addView(Ui.pageTitle(activity, "Root shell",
                 "Runs as uid 0 through the scooter's own daemon. Pipes and flags work. "
-                        + "This is the same channel scripts/ola.py uses.");
-        note.setPadding(0, Ui.dp(activity, 4), 0, Ui.dp(activity, 12));
-        body.addView(note);
+                        + "This is the same channel scripts/ola.py uses."));
 
         body.addView(provisioning(), topMargin(0));
 
@@ -90,12 +86,8 @@ public final class AdbTab implements Tab {
         body.addView(buttons, topMargin(8));
 
         body.addView(Ui.heading(activity, "Output"));
-        output = Ui.text(activity, "", 12, Ui.TEXT);
-        output.setTypeface(android.graphics.Typeface.MONOSPACE);
+        output = Ui.codeBlock(Ui.text(activity, "", 12, Ui.TEXT));
         output.setTextIsSelectable(true);
-        output.setBackground(Ui.round(activity, Ui.CARD, 10, Ui.LINE));
-        output.setPadding(Ui.dp(activity, 12), Ui.dp(activity, 10),
-                Ui.dp(activity, 12), Ui.dp(activity, 10));
         body.addView(output);
 
         TextView footer = Ui.note(activity,
@@ -137,6 +129,9 @@ public final class AdbTab implements Tab {
     }
 
     private void confirmProvision() {
+        if (!Access.require(activity, Access.ADMIN)) {
+            return;
+        }
         new AlertDialog.Builder(activity)
                 .setTitle("Unlock wireless ADB?")
                 .setMessage("This writes a key you control to the scooter and opens "
@@ -177,6 +172,9 @@ public final class AdbTab implements Tab {
     }
 
     private void undo() {
+        if (!Access.require(activity, Access.ADMIN)) {
+            return;
+        }
         if (!conn.ready()) {
             adbResult.setText("Connect to the scooter first.");
             adbResult.setTextColor(Ui.WARN);
@@ -260,6 +258,9 @@ public final class AdbTab implements Tab {
     }
 
     private void run() {
+        if (!Access.require(activity, Access.ADMIN)) {
+            return;
+        }
         String command = input.getText().toString().trim();
         if (command.isEmpty()) {
             output.setText("Nothing to run.");

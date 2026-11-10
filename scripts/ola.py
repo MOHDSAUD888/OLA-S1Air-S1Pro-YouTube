@@ -117,15 +117,24 @@ def build_target(host: str, port: int, scope: int | None) -> str:
         h = h.split("]")[0].lstrip("[")
 
     if h.count(":") >= 2:              # IPv6
-        if h.lower().startswith("fe80") and "%" not in h:
-            if scope is None:
-                raise SystemExit(
-                    "This is a link-local address. Add the interface number:\n"
-                    "  --ipv6 fe80::1234:5678:9abc:def0%6\n"
-                    "or  --scope 6\n"
-                    "On Windows, find it with: Get-NetNeighbor -AddressFamily IPv6")
-            h = f"{h}%{scope}"
-        return f"ipv6:[{h}]:{port}"
+        addr, _, zone = h.partition("%")
+        # A zone may already be RFC-6874 encoded ("%25<id>"); normalise to the
+        # bare id so we never double-encode it below.
+        if len(zone) > 2 and zone.lower().startswith("25"):
+            zone = zone[2:]
+        if addr.lower().startswith("fe80"):   # link-local needs an interface
+            if not zone:
+                if scope is None:
+                    raise SystemExit(
+                        "This is a link-local address. Add the interface number:\n"
+                        "  --ipv6 fe80::1234:5678:9abc:def0%6\n"
+                        "or  --scope 6\n"
+                        "On Windows, find it with: Get-NetNeighbor -AddressFamily IPv6")
+                zone = str(scope)
+            # gRPC's URI parser wants the zone id percent-encoded (RFC 6874):
+            # the literal "%" becomes "%25", so scope 13 -> "...%2513".
+            return f"ipv6:[{addr}%25{zone}]:{port}"
+        return f"ipv6:[{addr}]:{port}"
 
     return f"{h}:{port}"               # IPv4 or hostname (usually blocked)
 

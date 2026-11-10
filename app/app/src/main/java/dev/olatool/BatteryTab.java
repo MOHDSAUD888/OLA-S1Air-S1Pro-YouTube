@@ -1,10 +1,16 @@
 package dev.olatool;
 
+import android.graphics.Typeface;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
+
+import java.util.Locale;
 
 import dev.olatool.core.Live;
 
@@ -23,7 +29,9 @@ public final class BatteryTab implements Tab {
 
     private final TextView verdict;
     private final TextView hint;
-    private final TextView cellsLine;
+    private final BmsCellPanel cellPanel;
+    private final Ui.Kv imbalance;
+    private final Ui.Kv mcuVolt;
     private final Button liveButton;
 
     private final Ui.Kv soc;
@@ -91,12 +99,16 @@ public final class BatteryTab implements Tab {
         cellMin = add(pack, "Cell minimum");
         cellMax = add(pack, "Cell maximum");
         spread = add(pack, "Cell spread");
+        imbalance = add(pack, "Imbalance (Δ)");
+        mcuVolt = add(pack, "MCU voltage");
         body.addView(pack, margin());
 
+        // Per-cell grid: one bar per cell, scaled across the live pack min–max,
+        // the weakest cell amber, the strongest accent, a balancing cell blue.
         LinearLayout cells = Ui.card(activity);
         cells.addView(Ui.heading(activity, "Cells (14S)"));
-        cellsLine = Ui.text(activity, "-", 12, Ui.TEXT);
-        cells.addView(cellsLine);
+        cellPanel = new BmsCellPanel(activity);
+        cells.addView(cellPanel);
         body.addView(cells, margin());
 
         LinearLayout ride = Ui.card(activity);
@@ -131,6 +143,56 @@ public final class BatteryTab implements Tab {
                         + "start button or plug in the charger.");
         footer.setPadding(0, Ui.dp(activity, 10), 0, 0);
         body.addView(footer);
+    }
+
+    /** One cell: number, a bar scaled across the pack range, its mV, a balance dot. */
+    private static final class CellRow extends LinearLayout {
+        final TextView num;
+        final ProgressBar bar;
+        final TextView mv;
+        final TextView balance;
+
+        CellRow(MainActivity c, int index) {
+            super(c);
+            setOrientation(HORIZONTAL);
+            setGravity(Gravity.CENTER_VERTICAL);
+            setPadding(0, Ui.dp(c, 3), 0, Ui.dp(c, 3));
+
+            num = Ui.text(c, "C" + index, 12, Ui.DIM);
+            addView(num, new LayoutParams(Ui.dp(c, 30), LayoutParams.WRAP_CONTENT));
+
+            bar = Ui.bar(c, Ui.ACCENT);
+            LayoutParams bp = new LayoutParams(0, Ui.dp(c, 8), 1f);
+            bp.leftMargin = Ui.dp(c, 6);
+            bp.rightMargin = Ui.dp(c, 8);
+            addView(bar, bp);
+
+            mv = Ui.text(c, Ui.DASH, 12, Ui.TEXT);
+            mv.setGravity(Gravity.END);
+            mv.setTypeface(Typeface.MONOSPACE);
+            addView(mv, new LayoutParams(Ui.dp(c, 58), LayoutParams.WRAP_CONTENT));
+
+            balance = Ui.text(c, "", 10, Ui.INFO);
+            balance.setGravity(Gravity.END);
+            addView(balance, new LayoutParams(Ui.dp(c, 18), LayoutParams.WRAP_CONTENT));
+        }
+
+        void set(double volt, double lo, double hi, boolean balancing, boolean isMin, boolean isMax) {
+            if (Double.isNaN(volt) || volt <= 0) {
+                mv.setText(Ui.DASH);
+                Ui.bar(bar, 0);
+                balance.setText("");
+                return;
+            }
+            mv.setText(String.format(Locale.ROOT, "%d mV", (int) (volt * 1000.0)));
+            double span = hi - lo;
+            double frac = span < 0.001 ? 1.0 : (volt - lo) / span;
+            Ui.bar(bar, Math.max(0.04, Math.min(1, frac)));
+            int color = balancing ? Ui.INFO : isMin ? Ui.WARN : isMax ? Ui.ACCENT : 0xFF6B7684;
+            bar.setProgressTintList(android.content.res.ColorStateList.valueOf(color));
+            mv.setTextColor(isMin ? Ui.WARN : isMax ? Ui.ACCENT : Ui.TEXT);
+            balance.setText(balancing ? "BAL" : "");
+        }
     }
 
     private Ui.Kv add(LinearLayout parent, String label) {
@@ -226,6 +288,9 @@ public final class BatteryTab implements Tab {
         spread.set(Ui.fmt(s.cellSpreadV() * 1000.0, 0) + " mV  "
                 + spreadVerdict(s.cellSpreadV() * 1000.0),
                 healthColor(spreadVerdict(s.cellSpreadV() * 1000.0)));
+        imbalance.set(Double.isNaN(s.imbalanceV) ? Ui.DASH
+                : Ui.fmt(s.imbalanceV * 1000.0, 0) + " mV");
+        mcuVolt.set(Double.isNaN(s.mcuV) ? Ui.DASH : Ui.fmt(s.mcuV, 2) + " V");
 
         speed.set(Ui.fmt(s.speedKph, 1) + " km/h");
         range.set(Ui.fmt(s.rangeKm, 0) + " km");
@@ -243,21 +308,7 @@ public final class BatteryTab implements Tab {
         regen.set(s.regenName());
         hill.set(s.hillName());
 
-        cellsLine.setText(cellList(s));
-    }
-
-    private static String cellList(Live.Snapshot s) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < s.cells.length; i++) {
-            if (Double.isNaN(s.cells[i]) || s.cells[i] <= 0) {
-                continue;
-            }
-            if (sb.length() > 0) {
-                sb.append("   ");
-            }
-            sb.append(i + 1).append(": ").append((int) (s.cells[i] * 1000.0));
-        }
-        return sb.length() == 0 ? "-" : sb.toString();
+        cellPanel.update(s, bus == null ? null : bus.live());
     }
 
     private static String tri(int value) {

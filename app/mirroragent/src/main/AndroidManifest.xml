@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Not installed/launched; only its classes.dex is loaded by app_process. -->
+    <application android:hasCode="true" android:label="mirror-agent" />
+</manifest>

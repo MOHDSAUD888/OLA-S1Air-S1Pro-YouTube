@@ -69,6 +69,26 @@ public final class Net {
         }
     }
 
+    /**
+     * Connects to exactly what the user typed — no BSSID/ARP derivation. Accepts
+     * an IPv4, an IPv6 literal (with optional {@code %zone}), a hostname, and an
+     * optional port as {@code host:port} or {@code [ipv6]:port}. This is the path
+     * for a global IPv6 address or a public/ISP address reached over the
+     * internet, where the Wi-Fi tricks do not apply.
+     */
+    public static Result connectDirect(String typed, long timeoutMs) {
+        String input = typed == null ? "" : typed.trim();
+        if (input.isEmpty()) {
+            throw new IllegalArgumentException("Type an address first.");
+        }
+        Addr.Target target = Addr.parse(input, Rpc.DEFAULT_PORT);
+        Rpc rpc = Rpc.open(target, timeoutMs);
+        String note = target.ipv6
+                ? "direct IPv6 as typed — mode switching stays available"
+                : "direct connection as typed (" + target + ")";
+        return new Result(rpc, target, target.ipv6, note);
+    }
+
     public static Result connect(Context context, String typed, long timeoutMs) {
         String input = typed == null ? "" : typed.trim();
         if (input.isEmpty()) {

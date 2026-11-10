@@ -16,6 +16,94 @@ own adb key. Nothing here can impersonate a vehicle or a cloud account.
 
 ---
 
+## Get the repo on any platform
+
+This repo is self-contained: clone it on Windows, Linux or macOS and you have
+everything — scripts, the Android app source, the proto, and all the docs. No
+secret, key or token is stored here; you generate your own as you go.
+
+```bash
+git clone https://github.com/MOHDSAUD888/ola-s1-rea.git
+cd ola-s1-rea
+```
+
+What you need per platform (install once):
+
+| Platform | Python 3 | adb / scrcpy (optional) | Build the app (optional) |
+|---|---|---|---|
+| **Windows** | `winget install Python.Python.3` | `winget install Google.PlatformTools` · `scrcpy` from its releases | JDK 17 + `app\gradlew.bat` |
+| **Linux** | `sudo apt install python3 python3-pip` | `sudo apt install adb scrcpy` | JDK 17 + `app/gradlew` |
+| **macOS** | `brew install python` | `brew install android-platform-tools scrcpy` | JDK 17 + `app/gradlew` |
+
+Then the one Python dependency used by every script:
+
+```bash
+python -m pip install -r scripts/requirements.txt    # installs grpcio
+```
+
+That is all. The scripts are pure Python/PowerShell/shell and the app builds with
+the bundled Gradle wrapper — nothing is tied to one machine.
+
+> **Secrets stay out of git.** Your adb key, any token you capture, and local
+> tooling config are all `.gitignore`d. Keep them on your machine only. If you
+> ever find a real key or token, rotate it and never commit it.
+
+---
+
+## Repository layout
+
+```
+ola-s1-rea/
+├── README.md              ← you are here: the full zero-to-adb walkthrough
+├── DISCLAIMER.md          ← legal / "your own scooter only" notice
+├── LICENSE                ← MIT, for the scripts and docs
+├── THIRD-PARTY.md         ← attribution (Axiom signal & fault data, Apache-2.0)
+│
+├── docs/                  ← the deep-dive notebook, one file per topic
+│   ├── 01-the-scooter.md        hardware, OS, apps, CAN bridge, sleep/wake
+│   ├── 02-root-over-ipv6.md     the TCP 50005 hole and the shell trick
+│   ├── 03-adb-and-full-access.md unlocking adb, scrcpy, undo
+│   ├── 04-open-settings.md      the one-click Settings script
+│   ├── 05-can-bus.md            CAN ids, formulas, battery, faults, regen
+│   ├── 06-lock-and-passcode.md  keypad chain, why asleep blocks unlock
+│   ├── 07-hmi-ui.md             Kanzi renderer, screens, injected-tap limits
+│   ├── 08-ota-and-firmware.md   update path — what not to touch
+│   ├── 09-security-findings.md  the clean findings list, with proof
+│   ├── 10-how-to-do-rea.md      the method, reusable on another target
+│   ├── 11-glossary.md           plain-word definitions
+│   └── 12-android-app.md        the Android app, screen by screen
+│
+├── scripts/               ← the tools you run from your PC
+│   ├── ola.py                   root shell, Settings, screenshots, push/pull
+│   ├── find-scooter.ps1         find the scooter's IPv6 + test port 50005
+│   ├── open-settings.ps1 / .sh  one-click Android Settings (Win / *nix)
+│   ├── unlock-adb.ps1           reversible wireless-adb unlock for scrcpy
+│   ├── crack_passcode.py        passcode research helper
+│   ├── frida_unlock.py          Frida-based unlock research helper
+│   └── requirements.txt         one dependency: grpcio
+│
+├── proto/                 ← the recovered gRPC service definition
+│   ├── wifican.proto            the real 40-method service (from the binary)
+│   └── wifican-first-attempt.proto  the wrong first guess, kept as a lesson
+│
+├── licenses/              ← full license texts for third-party data
+│
+└── app/                   ← the Android companion app (Gradle multi-module)
+    ├── gradlew / gradlew.bat    build without installing Gradle
+    ├── settings.gradle.kts      wires the modules below together
+    ├── app/                     the UI: all the on-device screens
+    ├── core/                    shared logic: CAN codec, gRPC, fault tables
+    ├── cli/                     a command-line build of the same core
+    ├── mirroragent/             on-device screen-mirror agent
+    └── overlay/                 the YouTube-on-dash overlay service
+```
+
+**Not in this repo (intentionally):** the stock Ola APK, any extracted `.dex`/
+firmware, private research notes, local agent config, and anything holding a
+secret. Those are kept off GitHub on purpose — see the `.gitignore`.
+
+---
+
 ## The short version
 
 The dashboard runs a small Go program called `diagnostics_server`. It listens on

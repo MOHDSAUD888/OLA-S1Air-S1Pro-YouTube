@@ -53,14 +53,10 @@ public final class SignalsTab implements Tab {
         this.page = Ui.page(activity);
         LinearLayout body = Ui.body(page);
 
-        body.addView(Ui.text(activity, "Signals", 18, Ui.TEXT));
-
-        TextView note = Ui.note(activity,
+        body.addView(Ui.pageTitle(activity, "Signals",
                 "Decoded from can_database.json. Leave the box empty to list the "
                         + "messages seen so far; type part of a message or signal name "
-                        + "to see its value.");
-        note.setPadding(0, Ui.dp(activity, 4), 0, Ui.dp(activity, 10));
-        body.addView(note);
+                        + "to see its value."));
 
         search = new EditText(activity);
         search.setHint("message or signal name");
@@ -93,8 +89,7 @@ public final class SignalsTab implements Tab {
         status.setPadding(0, Ui.dp(activity, 8), 0, Ui.dp(activity, 8));
         body.addView(status);
 
-        table = Ui.text(activity, "", 11, Ui.TEXT);
-        table.setTypeface(android.graphics.Typeface.MONOSPACE);
+        table = Ui.codeBlock(Ui.text(activity, "", 11, Ui.TEXT));
         table.setTextIsSelectable(true);
         body.addView(table);
 

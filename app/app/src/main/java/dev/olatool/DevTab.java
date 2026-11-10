@@ -49,13 +49,9 @@ public final class DevTab implements Tab {
         this.page = Ui.page(activity);
         LinearLayout body = Ui.body(page);
 
-        body.addView(Ui.text(activity, "Developer", 18, Ui.TEXT));
-
-        TextView note = Ui.note(activity,
+        body.addView(Ui.pageTitle(activity, "Developer",
                 "Everything here is local. No command is sent to the scooter from this "
-                        + "screen.");
-        note.setPadding(0, Ui.dp(activity, 4), 0, Ui.dp(activity, 10));
-        body.addView(note);
+                        + "screen."));
 
         LinearLayout state = Ui.card(activity);
         state.addView(Ui.heading(activity, "State"));
@@ -110,7 +106,7 @@ public final class DevTab implements Tab {
         body.addView(Ui.button(activity, "Add simulated fault", v -> simulate()), topMargin(8));
 
         body.addView(Ui.heading(activity, "Simulated now"));
-        simulatedView = Ui.text(activity, "-", 12, Ui.DIM);
+        simulatedView = Ui.codeBlock(Ui.text(activity, "-", 12, Ui.DIM));
         simulatedView.setTextIsSelectable(true);
         body.addView(simulatedView);
 

@@ -23,8 +23,8 @@ android {
         applicationId = "dev.olatool"
         minSdk = 24
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.1.2"
+        versionCode = 15
+        versionName = "1.8.0"
     }
 
     compileOptions {
@@ -79,4 +79,17 @@ dependencies {
     implementation(project(":core"))
     // grpc-java needs a few java.util APIs that Android 7 does not ship.
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
+    // scrypt KDF for on-device passcode recovery (PasscodeTab).
+    implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
 }
+
+// Bundle the dash screen agent (a classes.dex run via app_process) as an asset,
+// so MirrorTab can push it to the dash itself over the root shell — no manual
+// adb step. The agent APK is tiny (~10 KB); only its classes.dex is used.
+val copyMirrorAgent by tasks.registering(Copy::class) {
+    dependsOn(":mirroragent:assembleDebug")
+    from(project(":mirroragent").layout.buildDirectory.file("outputs/apk/debug/mirroragent-debug.apk"))
+    into(layout.projectDirectory.dir("src/main/assets"))
+    rename { "mirror.apk" }
+}
+tasks.named("preBuild") { dependsOn(copyMirrorAgent) }

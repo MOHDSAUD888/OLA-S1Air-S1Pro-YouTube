@@ -19,3 +19,5 @@ rootProject.name = "ola-s1-tool"
 include(":core")
 include(":app")
 include(":cli")
+include(":overlay")
+include(":mirroragent")

@@ -39,18 +39,29 @@ public final class SettingsTab implements Tab {
     private final ScrollView page;
     private final TextView result;
 
+    private Button accRead;
+    private Button accEdit;
+    private Button accAdmin;
+    private TextView accNote;
+
     public SettingsTab(MainActivity activity, Conn conn) {
         this.activity = activity;
         this.conn = conn;
         this.page = Ui.page(activity);
         LinearLayout body = Ui.body(page);
 
-        body.addView(Ui.text(activity, "Android screens", 18, Ui.TEXT));
-        TextView note = Ui.note(activity,
+        body.addView(Ui.pageTitle(activity, "Settings",
+                "Access level and the stock Android screens on the scooter's own display."));
+
+        body.addView(accessSection());
+        body.addView(Ui.space(activity, 12));
+
+        body.addView(Ui.heading(activity, "Android screens"));
+        TextView screensNote = Ui.note(activity,
                 "These launch the stock Android activities on the scooter's own display. "
                         + "Nothing is written to the vehicle.");
-        note.setPadding(0, Ui.dp(activity, 4), 0, Ui.dp(activity, 12));
-        body.addView(note);
+        screensNote.setPadding(0, 0, 0, Ui.dp(activity, 10));
+        body.addView(screensNote);
 
         LinearLayout grid = Ui.column(activity);
         for (int i = 0; i < INTENTS.length; i += 2) {
@@ -86,6 +97,71 @@ public final class SettingsTab implements Tab {
         body.addView(result);
     }
 
+    // ----------------------------------------------------------- access level
+
+    private View accessSection() {
+        Ui.Section s = Ui.section(activity, "Access level",
+                "Controls what this tool is allowed to do. Defaults to Read-only.");
+        LinearLayout chips = Ui.row(activity);
+        accRead = Ui.button(activity, "Read-only", v -> setAccess(Access.READ));
+        accEdit = Ui.button(activity, "Edit", v -> setAccess(Access.EDIT));
+        accAdmin = Ui.button(activity, "Admin", v -> setAccess(Access.ADMIN));
+        chips.addView(accRead, accWeight(0));
+        chips.addView(accEdit, accWeight(8));
+        chips.addView(accAdmin, accWeight(8));
+        s.body.addView(chips);
+        accNote = Ui.note(activity, "");
+        accNote.setPadding(0, Ui.dp(activity, 10), 0, 0);
+        s.body.addView(accNote);
+        refreshAccess();
+        return s.card;
+    }
+
+    private LinearLayout.LayoutParams accWeight(int leftDp) {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        lp.leftMargin = Ui.dp(activity, leftDp);
+        return lp;
+    }
+
+    private void setAccess(int level) {
+        Access.setLevel(activity, level);
+        refreshAccess();
+    }
+
+    private void refreshAccess() {
+        int level = Access.level(activity);
+        styleAccChip(accRead, level == Access.READ);
+        styleAccChip(accEdit, level == Access.EDIT);
+        styleAccChip(accAdmin, level == Access.ADMIN);
+        String desc;
+        if (level == Access.ADMIN) {
+            desc = "Admin (full access): shell, ADB provisioning, mode switch, TechPack, "
+                    + "token fetch — everything.";
+        } else if (level == Access.EDIT) {
+            desc = "Edit: read plus harmless actions (open Android screens). Mode switch, "
+                    + "ADB, TechPack and token fetch stay blocked.";
+        } else {
+            desc = "Read-only: telemetry only. No command, no write, no mode change.";
+        }
+        accNote.setText(desc);
+        accNote.setTextColor(level == Access.ADMIN ? Ui.WARN : Ui.DIM);
+    }
+
+    private void styleAccChip(Button b, boolean selected) {
+        b.setAllCaps(false);
+        b.setTextSize(13);
+        if (selected) {
+            b.setTextColor(Ui.ACCENT);
+            b.setTypeface(null, android.graphics.Typeface.BOLD);
+            b.setBackground(Ui.round(activity, Ui.alpha(Ui.ACCENT, 0x1A), 10, Ui.alpha(Ui.ACCENT, 0x55)));
+        } else {
+            b.setTextColor(Ui.DIM);
+            b.setTypeface(null, android.graphics.Typeface.NORMAL);
+            b.setBackground(Ui.round(activity, Ui.CARD, 10, Ui.LINE));
+        }
+    }
+
     private Button intentButton(String label, String action) {
         return Ui.button(activity, label, v -> run("am start -a " + action,
                 "Asked Android to open " + label + "."));
@@ -103,6 +179,9 @@ public final class SettingsTab implements Tab {
     }
 
     private void confirmRestart() {
+        if (!Access.require(activity, Access.ADMIN)) {
+            return;
+        }
         new AlertDialog.Builder(activity)
                 .setTitle("Restart the dash?")
                 .setMessage("This force-stops com.olaelectric.hmiclient and starts it again. "
@@ -130,6 +209,9 @@ public final class SettingsTab implements Tab {
     }
 
     private void run(String command, String okText) {
+        if (!Access.require(activity, Access.EDIT)) {
+            return;
+        }
         if (!conn.ready()) {
             result.setText("Connect to the scooter first.");
             result.setTextColor(Ui.WARN);

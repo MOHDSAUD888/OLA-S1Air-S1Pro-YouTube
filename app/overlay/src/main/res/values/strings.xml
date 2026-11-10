@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="a11y_desc">Shows Back and Close buttons over SmartTube and hides the launch zone while a video plays. No screen content is read.</string>
+</resources>

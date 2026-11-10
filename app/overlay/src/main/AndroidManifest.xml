@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- The invisible home-screen zone is a system overlay window. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- Re-add the zone after a reboot. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Foreground service so the dash does not reap the window. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- CLOSE reclaims SmartTube's RAM once it is in the background. -->
+    <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
+    <!-- The floating WebView player loads YouTube. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="false"
+        android:label="YT Zone">
+
+        <!-- Tiny launcher: grants overlay permission, starts the service, exits. -->
+        <activity
+            android:name=".SetupActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".OverlayService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
+
+        <!-- Floating WebView YouTube player. -->
+        <service
+            android:name=".WebPlayerService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
+
+        <!-- Lets the floating controls send BACK to SmartTube and tells us which
+             app is in front. User enables it once in Settings > Accessibility. -->
+        <service
+            android:name=".YtAccessibilityService"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/yt_accessibility_config" />
+        </service>
+
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>
