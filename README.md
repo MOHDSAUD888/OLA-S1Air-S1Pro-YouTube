@@ -54,6 +54,7 @@ own adb key. Nothing here can impersonate a vehicle or a cloud account.
 
 - [**▶️ YouTube on the dashboard**](#youtube-on-the-dashboard) — the headline: real YouTube on the S1 screen
 - [**Get the repo on any platform**](#get-the-repo-on-any-platform) — clone & set up on Windows / Linux / macOS
+- [**Install the Claude Code plugin**](#install-the-claude-code-plugin) — the skills and slash commands that ship with this repo
 - [**Repository layout**](#repository-layout) — the folder tree, explained
 - [The short version](#the-short-version) — the one trick, in a paragraph
 - [60-second start](#60-second-start-open-android-settings-on-the-scooter) — open Android Settings on the dash
@@ -128,6 +129,63 @@ the bundled Gradle wrapper — nothing is tied to one machine.
 
 ---
 
+<a id="install-the-claude-code-plugin"></a>
+
+## Install the Claude Code plugin
+
+This repo ships a [Claude Code plugin](.claude-plugin/) — skills and slash
+commands that wrap the research in these pages so you can invoke it by name.
+
+**Skills** (auto-loaded when relevant):
+
+| Skill | What it covers |
+|---|---|
+| [`ola-s1-connect`](.claude-plugin/skills/ola-s1-connect/SKILL.md) | Root gRPC on TCP 50005, `ola.py`, all the remote actions |
+| [`ola-s1-canbus`](.claude-plugin/skills/ola-s1-canbus/SKILL.md) | `vcan0`, `CanDumpStream`, the CAN map in `can_database.json` |
+| [`ola-s1-passcode`](.claude-plugin/skills/ola-s1-passcode/SKILL.md) | The scrypt `$s0$` hash, `crack_passcode.py`, the Frida unlock |
+| [`ola-s1-youtube`](.claude-plugin/skills/ola-s1-youtube/SKILL.md) | The `olatube` overlay and SmartTube PIP |
+| [`ola-s1-mirror`](.claude-plugin/skills/ola-s1-mirror/SKILL.md) | The on-dash H.264 agent, wireless adb, touch injection |
+| [`ola-s1-ota`](.claude-plugin/skills/ola-s1-ota/SKILL.md) | The MQTT update chain and the unsigned CloudFront download |
+| [`ola-s1-cloud`](.claude-plugin/skills/ola-s1-cloud/SKILL.md) | `kong2.olaelectric.com`, the header set, the telemetry endpoints |
+
+**Slash commands** (type `/` in any prompt):
+
+- `/ola-connect <action> --ipv6 <addr>` — run a root action on the scooter
+- `/ola-canbus` — read `vcan0` or the parser's `logcat`
+- `/ola-youtube overlay|smartube` — set up the dash player
+
+### Install it
+
+The plugin ships as a one-plugin **marketplace** (`.claude-plugin/marketplace.json`).
+Claude Code installs it in two steps — add this repo as a marketplace, then
+install the plugin from it:
+
+```sh
+# 1 — add this repo as a plugin marketplace (one time)
+/plugin marketplace add MOHDSAUD888/OLA-S1Air-S1Pro-YouTube
+
+# 2 — install the plugin from it   (name is  plugin@marketplace)
+/plugin install ola-s1-rea@ola-s1-rea
+```
+
+Already cloned the repo? Point the marketplace at the local folder instead of the
+GitHub path:
+
+```sh
+/plugin marketplace add ./OLA-S1Air-S1Pro-YouTube
+/plugin install ola-s1-rea@ola-s1-rea
+```
+
+Run `/plugin` any time to view, toggle, or update it. Once installed, the skills
+load themselves whenever your prompt matches one, and the three slash commands
+appear under `/`.
+
+The plugin carries no secrets and no vehicle state — it is just the method. Your
+adb key, any captured token, and local tooling config stay `.gitignore`d on your
+machine.
+
+---
+
 ## Repository layout
 
 ```
@@ -136,6 +194,12 @@ OLA-S1Air-S1Pro-YouTube/
 ├── DISCLAIMER.md          ← legal / "your own scooter only" notice
 ├── LICENSE                ← MIT, for the scripts and docs
 ├── THIRD-PARTY.md         ← attribution (Axiom signal & fault data, Apache-2.0)
+│
+├── .claude-plugin/        ← Claude Code plugin: skills + slash commands
+│   ├── marketplace.json        makes this repo an installable marketplace
+│   ├── plugin.json             the plugin manifest (name, version, keywords)
+│   ├── skills/                 7 ola-s1-* skills (connect, canbus, passcode, …)
+│   └── commands/               /ola-connect, /ola-canbus, /ola-youtube
 │
 ├── docs/                  ← the deep-dive notebook, one file per topic
 │   ├── 01-the-scooter.md        hardware, OS, apps, CAN bridge, sleep/wake

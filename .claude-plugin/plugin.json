@@ -1,0 +1,27 @@
+{
+  "name": "ola-s1-rea",
+  "version": "1.0.0",
+  "description": "Reverse-engineering skills for the Ola S1 Air / S1 Pro head unit: root gRPC over IPv6, the CAN bus, MoveOS, the passcode lock, and running YouTube on the dash.",
+  "author": {
+    "name": "Mohd Saud",
+    "url": "https://github.com/MOHDSAUD888"
+  },
+  "homepage": "https://github.com/MOHDSAUD888/OLA-S1Air-S1Pro-YouTube",
+  "repository": "https://github.com/MOHDSAUD888/OLA-S1Air-S1Pro-YouTube",
+  "documentationUrl": "https://github.com/MOHDSAUD888/OLA-S1Air-S1Pro-YouTube#readme",
+  "license": "MIT",
+  "keywords": [
+    "ola",
+    "s1",
+    "scooter",
+    "reverse-engineering",
+    "android",
+    "can-bus",
+    "moveos",
+    "adb",
+    "frida",
+    "ota"
+  ],
+  "skills": "./skills/",
+  "commands": "./commands/"
+}
