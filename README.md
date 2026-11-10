@@ -101,8 +101,8 @@ everything — scripts, the Android app source, the proto, and all the docs. No
 secret, key or token is stored here; you generate your own as you go.
 
 ```bash
-git clone https://github.com/MOHDSAUD888/ola-s1-rea.git
-cd ola-s1-rea
+git clone https://github.com/MOHDSAUD888/OLA-S1Air-S1Pro-YouTube.git
+cd OLA-S1Air-S1Pro-YouTube
 ```
 
 What you need per platform (install once):
@@ -131,7 +131,7 @@ the bundled Gradle wrapper — nothing is tied to one machine.
 ## Repository layout
 
 ```
-ola-s1-rea/
+OLA-S1Air-S1Pro-YouTube/
 ├── README.md              ← you are here: the full zero-to-adb walkthrough
 ├── DISCLAIMER.md          ← legal / "your own scooter only" notice
 ├── LICENSE                ← MIT, for the scripts and docs
@@ -647,7 +647,7 @@ fail does it drop to IPv4, and then mode switching is disabled.
 Build:
 
 ```powershell
-cd ola-s1-rea\app
+cd OLA-S1Air-S1Pro-YouTube\app
 .\gradlew.bat :app:assembleDebug
 ```
 
