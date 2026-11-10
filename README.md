@@ -1,4 +1,23 @@
-# Ola S1 / S1 Pro — Head Unit Reverse Engineering
+<div align="center">
+
+# ⚡ Ola S1 / S1 Pro — Head Unit Reverse Engineering
+
+**Root the dashboard over IPv6 · read the whole CAN bus · open Android on the dash.**
+
+_No flashing. No keys. No cloud. Your own scooter only._
+
+<br/>
+
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-0a7bbb?style=flat-square)
+![App](https://img.shields.io/badge/app-Android%20(Java)%20%2B%20Python-3DDC84?style=flat-square&logo=android&logoColor=white)
+![Access](https://img.shields.io/badge/access-root%20via%20gRPC%20over%20IPv6-c0392b?style=flat-square)
+![Method](https://img.shields.io/badge/method-no%20flashing%20%C2%B7%20no%20partition%20writes-2ecc71?style=flat-square)
+![Secrets](https://img.shields.io/badge/secrets-none%20in%20repo-999?style=flat-square&logo=githubactions&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square)
+
+</div>
+
+---
 
 Notes from taking apart the dashboard of an Ola S1 (E2 platform, software `5.6.1`).
 This is a lab notebook, not a product. Everything here was done on an owner's own
@@ -13,6 +32,21 @@ own adb key. Nothing here can impersonate a vehicle or a cloud account.
 
 > New here? The full walkthrough is [How to do it yourself — zero to real
 > adb](#how-to-do-it-yourself--zero-to-real-adb).
+
+---
+
+## Contents
+
+- [**Get the repo on any platform**](#get-the-repo-on-any-platform) — clone & set up on Windows / Linux / macOS
+- [**Repository layout**](#repository-layout) — the folder tree, explained
+- [The short version](#the-short-version) — the one trick, in a paragraph
+- [60-second start](#60-second-start-open-android-settings-on-the-scooter) — open Android Settings on the dash
+- [**How to do it yourself — zero to real adb**](#how-to-do-it-yourself--zero-to-real-adb) — the full, nothing-skipped walkthrough
+- [What is in the box](#what-is-in-the-box) — the hardware, the apps, the bus
+- [The Android app](#the-android-app) — the nine-screen companion APK
+- [Docs](#docs) — the deep-dive notebook (12 topics)
+- [What is proven, and what is not](#what-is-proven-and-what-is-not)
+- [Safety](#safety) · [Legal](#legal) · [License](#license)
 
 ---
 
