@@ -13,6 +13,18 @@ adbkey.pub
 secrets/
 private/
 
+# Device-pulled SQLite dumps (profile-manager etc.) — hold the scrypt passcode
+# hash and personal profile data. Never publish.
+*.db
+*.sqlite
+*.sqlite3
+
+# Local scratch / debug files
+cli_debug*.py
+cwd_test.py
+push_debug.py
+test_push*.txt
+
 # Large device dumps
 *.apk
 *.apks

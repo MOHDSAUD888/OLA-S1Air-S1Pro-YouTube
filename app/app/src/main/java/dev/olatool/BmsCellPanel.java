@@ -120,7 +120,7 @@ public final class BmsCellPanel extends LinearLayout {
             double span = hi - lo;
             double frac = span < 0.001 ? 1.0 : (volt - lo) / span;
             Ui.bar(bar, Math.max(0.04, Math.min(1, frac)));
-            int color = balancing ? Ui.INFO : isMin ? Ui.WARN : isMax ? Ui.ACCENT : 0xFF6B7684;
+            int color = balancing ? Ui.INFO : isMin ? Ui.WARN : isMax ? Ui.ACCENT : Ui.CELL_NORMAL;
             bar.setProgressTintList(ColorStateList.valueOf(color));
             mv.setTextColor(isMin ? Ui.WARN : isMax ? Ui.ACCENT : Ui.TEXT);
             balance.setText(balancing ? "BAL" : "");

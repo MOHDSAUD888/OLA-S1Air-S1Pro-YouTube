@@ -141,6 +141,13 @@ public final class MirrorTab implements Tab {
         openRow.addView(Ui.danger(activity, "Close + clean", v -> ytForceStop()), weight());
         body.addView(openRow, topMargin(12));
 
+        // Lock / unlock the dash's hidden 7-tap launcher (dev.olatube overlay).
+        LinearLayout lockRow = Ui.row(activity);
+        lockRow.addView(Ui.button(activity, "🔒 Lock 7-tap", v -> ytLock(true)), weight());
+        lockRow.addView(Ui.space(activity, 0), fixed(8));
+        lockRow.addView(Ui.button(activity, "🔓 Unlock 7-tap", v -> ytLock(false)), weight());
+        body.addView(lockRow, topMargin(8));
+
         body.addView(centerRow(Ui.button(activity, "▲", v -> key(KEY_UP))), topMargin(8));
         LinearLayout mid = Ui.row(activity);
         mid.addView(Ui.button(activity, "◀", v -> key(KEY_LEFT)), weight());
@@ -218,8 +225,20 @@ public final class MirrorTab implements Tab {
     private static final String YT_SPLASH =
             "com.liskovsoft.smartyoutubetv2.tv.ui.main.SplashActivity";
 
+    /** The overlay app's one-shot command activity (dev.olatube). */
+    private static final String YT_SETUP = "dev.olatube/.SetupActivity";
+
     private void ytOpen() {
         remote("am start -n " + YT_PKG + "/" + YT_SPLASH, "YouTube opened.");
+    }
+
+    /** Lock or unlock the dash's hidden 7-tap YouTube launcher. Fires the same
+     *  intent command a user could send by hand; the overlay persists the flag,
+     *  so it holds across a dash reboot. */
+    private void ytLock(boolean lock) {
+        String feature = lock ? "lock" : "unlock";
+        remote("am start -n " + YT_SETUP + " -e feature " + feature,
+                lock ? "7-tap locked." : "7-tap unlocked.");
     }
 
     private void ytForceStop() {

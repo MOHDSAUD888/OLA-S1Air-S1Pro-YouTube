@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import base64
 import os
+import re
 import sys
 import time
 
@@ -180,6 +181,25 @@ def sh_wrap(command: str) -> str:
     return "sh -c " + command.replace(" ", "${IFS}")
 
 
+def scooter_path(p: str) -> str:
+    """Undo the local shell's path mangling so a scooter path is a scooter path.
+
+    Git Bash on Windows maps a leading ``/`` to the Git install root, so
+    ``/data/local/tmp/x`` arrives here as ``C:/Program Files/Git/data/...``.
+    Extract the Unix subpath starting at a recognised root segment so the
+    daemon receives ``/data/local/tmp/x`` exactly as typed.
+    """
+    p = p.replace("\\", "/")
+    m = re.match(r"^[A-Za-z]:/(.*)$", p)
+    if m:
+        parts = m.group(1).split("/")
+        for i, part in enumerate(parts):
+            if part in ("data", "sdcard", "mnt", "system", "vendor", "etc", "tmp", "storage", "cache"):
+                return "/" + "/".join(parts[i:])
+        return "/" + m.group(1)
+    return p
+
+
 def ok(status: int) -> bool:
     return status in (0, 1)            # 1 = RESP_SUCCESS, 0 = RESP_NONE
 
@@ -212,10 +232,16 @@ def push(channel, local: str, remote: str, timeout: float = 120.0):
     encoded = base64.b64encode(data).decode()
     chunk = 60_000
     first = True
+    remote = scooter_path(remote)
+    # The daemon splits on whitespace, so a remote path with spaces would be
+    # mangled (e.g. "C:/Program Files/x" -> "can't create C:/Program"). The
+    # echo|base64 -d redirect must be written with ${IFS} in place of spaces,
+    # exactly as sh_wrap does for shell commands.
+    r = remote.replace(" ", "${IFS}")
     for start in range(0, len(encoded), chunk):
         part = encoded[start:start + chunk]
         redirect = ">" if first else ">>"
-        cmd = f"sh -c echo${{IFS}}{part}|base64${{IFS}}-d{redirect}{remote}"
+        cmd = f"sh -c echo${{IFS}}{part}|base64${{IFS}}-d{redirect}{r}"
         status, message = run(channel, cmd, timeout, quiet=True)
         if not ok(status):
             raise SystemExit(f"push failed at byte {start}: {message}")
@@ -226,7 +252,7 @@ def push(channel, local: str, remote: str, timeout: float = 120.0):
 
 
 def pull(channel, remote: str, local: str, timeout: float = 120.0):
-    status, encoded = run(channel, sh_wrap(f"base64 {remote}"), timeout,
+    status, encoded = run(channel, sh_wrap(f"base64 {scooter_path(remote)}"), timeout,
                           quiet=True)
     if not ok(status):
         raise SystemExit(f"pull failed: {encoded}")
@@ -457,10 +483,10 @@ def main(argv=None):
             return screenshot(channel, args.path)
 
         if a == "push":
-            return push(channel, args.local, args.remote)
+            return push(channel, args.local, scooter_path(args.remote))
 
         if a == "pull":
-            return pull(channel, args.remote, args.local)
+            return pull(channel, scooter_path(args.remote), args.local)
 
         parser.error(f"unknown action: {a}")
 

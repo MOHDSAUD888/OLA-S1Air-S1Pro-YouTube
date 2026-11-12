@@ -126,49 +126,49 @@ public final class MapView extends View {
         //noinspection ResultOfMethodCallIgnored
         disk.mkdirs();
 
-        bg.setColor(0xFFE8E4DC);
+        bg.setColor(Ui.MAP_BG);
         trailPaint.setStyle(Paint.Style.STROKE);
         trailPaint.setStrokeWidth(4f * d);
         trailPaint.setStrokeCap(Paint.Cap.ROUND);
         trailPaint.setStrokeJoin(Paint.Join.ROUND);
-        trailPaint.setColor(0xFF1E88E5);
+        trailPaint.setColor(Ui.MAP_TRAIL);
         trailHalo.set(trailPaint);
         trailHalo.setStrokeWidth(7f * d);
-        trailHalo.setColor(0x99FFFFFF);
+        trailHalo.setColor(Ui.MAP_TRAIL_HALO);
         accFill.setColor(Ui.alpha(Ui.ACCENT, 0x30));
         accEdge.setStyle(Paint.Style.STROKE);
         accEdge.setStrokeWidth(1.5f * d);
         accEdge.setColor(Ui.alpha(Ui.ACCENT, 0x90));
         pulse.setStyle(Paint.Style.STROKE);
         pulse.setStrokeWidth(3f * d);
-        pinFill.setColor(0xFFFFFFFF);
+        pinFill.setColor(Ui.MAP_PIN_FILL);
         pinEdge.setStyle(Paint.Style.STROKE);
         pinEdge.setStrokeWidth(3f * d);
-        pinEdge.setColor(0xFF0B8F6B);
+        pinEdge.setColor(Ui.MAP_PIN);
         ink.setStyle(Paint.Style.STROKE);
         ink.setStrokeWidth(2.2f * d);
         ink.setStrokeCap(Paint.Cap.ROUND);
         ink.setStrokeJoin(Paint.Join.ROUND);
-        ink.setColor(0xFF111418);
-        inkFill.setColor(0xFF111418);
-        arrow.setColor(0xFF0B8F6B);
-        meFill.setColor(0xFF1E88E5);
+        ink.setColor(Ui.MAP_INK);
+        inkFill.setColor(Ui.MAP_INK);
+        arrow.setColor(Ui.MAP_ARROW);
+        meFill.setColor(Ui.MAP_ME_FILL);
         meEdge.setStyle(Paint.Style.STROKE);
         meEdge.setStrokeWidth(2.5f * d);
-        meEdge.setColor(0xFFFFFFFF);
-        btnFill.setColor(0xF2FFFFFF);
-        btnDot.setColor(0xFF0B8F6B);
+        meEdge.setColor(Ui.MAP_ME_EDGE);
+        btnFill.setColor(Ui.MAP_BTN_FILL);
+        btnDot.setColor(Ui.MAP_BTN_DOT);
         btnEdge.setStyle(Paint.Style.STROKE);
         btnEdge.setStrokeWidth(1f * d);
-        btnEdge.setColor(0x33000000);
-        btnInk.setColor(0xFF333B44);
+        btnEdge.setColor(Ui.MAP_BTN_EDGE);
+        btnInk.setColor(Ui.MAP_BTN_INK);
         btnInk.setStyle(Paint.Style.STROKE);
         btnInk.setStrokeWidth(2.2f * d);
         btnInk.setStrokeCap(Paint.Cap.ROUND);
-        attr.setColor(0xFF333333);
+        attr.setColor(Ui.MAP_ATTR);
         attr.setTextSize(9.5f * d);
-        attrBg.setColor(0xB3FFFFFF);
-        hint.setColor(0xFF555555);
+        attrBg.setColor(Ui.MAP_ATTR_BG);
+        hint.setColor(Ui.MAP_HINT);
         hint.setTextSize(13f * d);
         hint.setTextAlign(Paint.Align.CENTER);
 
@@ -595,7 +595,7 @@ public final class MapView extends View {
         // crosshair (filled centre when following)
         float fcx = btnFollow.centerX();
         float fcy = btnFollow.centerY();
-        btnInk.setColor(follow ? 0xFF0B8F6B : 0xFF333B44);
+        btnInk.setColor(follow ? Ui.MAP_FOLLOW : Ui.MAP_BTN_INK);
         c.drawCircle(fcx, fcy, k * 0.8f, btnInk);
         c.drawLine(fcx, fcy - k * 1.3f, fcx, fcy - k * 0.8f, btnInk);
         c.drawLine(fcx, fcy + k * 0.8f, fcx, fcy + k * 1.3f, btnInk);
@@ -604,7 +604,7 @@ public final class MapView extends View {
         if (follow) {
             c.drawCircle(fcx, fcy, k * 0.35f, btnDot);
         }
-        btnInk.setColor(0xFF333B44);
+        btnInk.setColor(Ui.MAP_BTN_INK);
     }
 
     private void drawAttribution(Canvas c, int w, int h) {

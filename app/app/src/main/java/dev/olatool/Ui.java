@@ -22,11 +22,11 @@ public final class Ui {
     // accent, brighter body text. BG < CARD < ELEV gives real depth.
     public static final int BG = 0xFF15161E;
     public static final int CARD = 0xFF1A1B26;
-    public static final int ELEV = 0xFF222433;
+    public static final int ELEV = 0xFF2A2D44;
     public static final int CODE_BG = 0xFF101019;
-    public static final int LINE = 0xFF2C3047;
+    public static final int LINE = 0xFF3C4268;
     public static final int TEXT = 0xFFC8D2F0;
-    public static final int DIM = 0xFF8C95B8;
+    public static final int DIM = 0xFFAAB2D8;
     public static final int ACCENT = 0xFF7AA2F7;
     public static final int INFO = 0xFF7DCFFF;
     public static final int WARN = 0xFFE0AF68;
@@ -34,6 +34,51 @@ public final class Ui {
 
     /** Readable text on top of an ACCENT fill (buttons, pills). */
     public static final int ON_ACCENT = 0xFF0B1020;
+
+    /** A neutral grey for ordinary cell glyphs and muted icons. */
+    public static final int CELL_NORMAL = 0xFF6B7684;
+
+    /** A soft lilac for cast / companion devices. */
+    public static final int LILAC = 0xFFB98BFF;
+
+    // Danger palette — used only for the one destructive action on a screen.
+    public static final int DANGER_TEXT = 0xFFFFD9DA;
+    public static final int DANGER_BG = 0xFF3A1C1F;
+    public static final int DANGER_EDGE = 0xFF5A2A2E;
+    public static final int DANGER_RIPPLE = 0xFFE5484D;
+
+    // Map view — the map draws its own world, so it keeps its own palette
+    // rather than borrowing the dashboard's.
+    public static final int MAP_BG = 0xFFE8E4DC;
+    public static final int MAP_TRAIL = 0xFF1E88E5;
+    public static final int MAP_TRAIL_HALO = 0x99FFFFFF;
+    public static final int MAP_PIN = 0xFF0B8F6B;
+    public static final int MAP_PIN_EDGE = 0xFFFFFFFF;
+    public static final int MAP_INK = 0xFF111418;
+    public static final int MAP_ARROW = 0xFF0B8F6B;
+    public static final int MAP_ME_FILL = 0xFF1E88E5;
+    public static final int MAP_ME_EDGE = 0xFFFFFFFF;
+    public static final int MAP_BTN_FILL = 0xF2FFFFFF;
+    public static final int MAP_BTN_DOT = 0xFF0B8F6B;
+    public static final int MAP_BTN_EDGE = 0x33000000;
+    public static final int MAP_BTN_INK = 0xFF333B44;
+    public static final int MAP_FOLLOW = 0xFF0B8F6B;
+    public static final int MAP_ATTR = 0xFF333333;
+    public static final int MAP_ATTR_BG = 0xB3FFFFFF;
+    public static final int MAP_HINT = 0xFF555555;
+
+    // Overlay / web player — floating UI over video, so it keeps its own
+    // darks and clear whites rather than the dashboard's.
+    public static final int OVERLAY_PLATE = 0xCC202124;
+    public static final int OVERLAY_RED = 0xFFFF0000;
+    public static final int OVERLAY_BLACK = 0xAA000000;
+    public static final int PLAYER_BAR = 0xDD111111;
+    public static final int PLAYER_GRIP = 0x55FFFFFF;
+    public static final int PLAYER_CAP = 0x22FFFFFF;
+
+    /** Corner radii, in dp. Two sizes only, so every surface matches. */
+    public static final int RADIUS_CARD = 16;
+    public static final int RADIUS_CONTROL = 12;
 
     /** Shown where the vehicle has not reported a value yet. */
     public static final String DASH = "\u2014";
@@ -77,6 +122,26 @@ public final class Ui {
         return v;
     }
 
+    /**
+     * Styles a value that changes live: medium weight and tabular digits, so
+     * the text does not jitter sideways as the number ticks.
+     */
+    public static TextView number(TextView v) {
+        v.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        v.setFontFeatureSettings("tnum");
+        return v;
+    }
+
+    /** A 3dp accent bar along the bottom edge: the selected-tab indicator. */
+    public static android.graphics.drawable.Drawable underline(Context c, int color) {
+        android.graphics.drawable.LayerDrawable d = new android.graphics.drawable.LayerDrawable(
+                new android.graphics.drawable.Drawable[]{round(c, color, 2, 0)});
+        d.setLayerGravity(0, Gravity.BOTTOM);
+        d.setLayerHeight(0, dp(c, 3));
+        d.setLayerInset(0, dp(c, 12), 0, dp(c, 12), 0);
+        return d;
+    }
+
     public static TextView heading(Context c, String s) {
         TextView v = text(c, s, 13, DIM);
         v.setAllCaps(true);
@@ -90,9 +155,8 @@ public final class Ui {
     }
 
     /**
-     * A page header: an accent stripe, a bold title, and an optional dim
-     * subtitle. The premium replacement for a bare title + note at the top of a
-     * tab, so every screen opens the same way.
+     * A page header: a title and an optional dim subtitle, so every screen
+     * opens the same way. {@code accent} is kept for callers; it is not drawn.
      */
     public static View pageTitle(Context c, String title, String subtitle) {
         return pageTitle(c, title, subtitle, ACCENT);
@@ -100,23 +164,15 @@ public final class Ui {
 
     public static View pageTitle(Context c, String title, String subtitle, int accent) {
         LinearLayout wrap = column(c);
-        wrap.setPadding(0, dp(c, 2), 0, dp(c, 10));
+        wrap.setPadding(0, dp(c, 4), 0, dp(c, 14));
 
-        LinearLayout head = row(c);
-        View stripe = new View(c);
-        stripe.setBackground(round(c, accent, 2, 0));
-        LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(dp(c, 3), dp(c, 24));
-        sp.rightMargin = dp(c, 10);
-        head.addView(stripe, sp);
-
-        TextView t = text(c, title, 20, TEXT);
-        t.setTypeface(t.getTypeface(), Typeface.BOLD);
-        head.addView(t);
-        wrap.addView(head);
+        TextView t = text(c, title, 22, TEXT);
+        t.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        wrap.addView(t);
 
         if (subtitle != null && !subtitle.isEmpty()) {
-            TextView s = text(c, subtitle, 12, DIM);
-            s.setPadding(dp(c, 13), dp(c, 5), 0, 0);
+            TextView s = text(c, subtitle, 13, DIM);
+            s.setPadding(0, dp(c, 4), 0, 0);
             wrap.addView(s);
         }
         return wrap;
@@ -138,13 +194,12 @@ public final class Ui {
         b.setAllCaps(false);
         b.setTextSize(14);
         b.setTextColor(TEXT);
-        b.setBackground(pressable(c, CARD, 10, LINE, alpha(0xFFFFFFFF, 0x30)));
+        b.setBackground(pressable(c, ELEV, RADIUS_CONTROL, LINE, alpha(0xFFFFFFFF, 0x30)));
         b.setPadding(dp(c, 16), dp(c, 10), dp(c, 16), dp(c, 10));
+        b.setStateListAnimator(null);   // flat: no Material lift shadow
         // Material: 48dp minimum touch target on Android.
         b.setMinHeight(dp(c, 48));
         b.setMinWidth(dp(c, 48));
-        // Resting shadow so the press animation has something to sink into.
-        b.setElevation(dp(c, 3));
         // Every button is built here, and accent()/danger() delegate to it, so
         // wiring once gives the whole app the same haptic tick + 3D press feel.
         wire(b, l);
@@ -164,26 +219,25 @@ public final class Ui {
     }
 
     /**
-     * A springy scale-and-sink on touch, for a real, 3D button-press feel:
-     * presses shrink to 93% and drop their Z (sinking into the resting shadow),
-     * then pop back with a slight overshoot on release. The touch listener does
-     * not consume the event, so the ripple and the click still run.
+     * A quiet press: the view eases to 97% and dims slightly, then eases back
+     * on release. No bounce and no shadow, which read as toy-like on a dark
+     * flat surface. The touch listener does not consume the event, so the
+     * ripple and the click still run.
      */
     @android.annotation.SuppressLint("ClickableViewAccessibility")
     public static void pressFeel(View v) {
         v.setOnTouchListener((view, ev) -> {
             switch (ev.getActionMasked()) {
                 case android.view.MotionEvent.ACTION_DOWN:
-                    view.animate().scaleX(0.93f).scaleY(0.93f)
-                            .translationZ(-dp(view.getContext(), 3))
+                    view.animate().scaleX(0.97f).scaleY(0.97f).alpha(0.85f)
                             .setInterpolator(new android.view.animation.DecelerateInterpolator())
-                            .setDuration(70).start();
+                            .setDuration(80).start();
                     break;
                 case android.view.MotionEvent.ACTION_UP:
                 case android.view.MotionEvent.ACTION_CANCEL:
-                    view.animate().scaleX(1f).scaleY(1f).translationZ(0f)
-                            .setInterpolator(new android.view.animation.OvershootInterpolator(2.4f))
-                            .setDuration(160).start();
+                    view.animate().scaleX(1f).scaleY(1f).alpha(1f)
+                            .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                            .setDuration(140).start();
                     break;
                 default:
                     break;
@@ -214,14 +268,14 @@ public final class Ui {
         Button b = button(c, label, l);
         b.setTextColor(ON_ACCENT);
         b.setTypeface(b.getTypeface(), Typeface.BOLD);
-        b.setBackground(pressable(c, ACCENT, 10, 0, alpha(0xFF000000, 0x33)));
+        b.setBackground(pressable(c, ACCENT, RADIUS_CONTROL, 0, alpha(0xFF000000, 0x33)));
         return b;
     }
 
     public static Button danger(Context c, String label, View.OnClickListener l) {
         Button b = button(c, label, l);
-        b.setTextColor(0xFFFFD9DA);
-        b.setBackground(pressable(c, 0xFF3A1C1F, 10, 0xFF5A2A2E, alpha(0xFFE5484D, 0x44)));
+        b.setTextColor(DANGER_TEXT);
+        b.setBackground(pressable(c, DANGER_BG, RADIUS_CONTROL, DANGER_EDGE, alpha(DANGER_RIPPLE, 0x44)));
         return b;
     }
 
@@ -238,11 +292,36 @@ public final class Ui {
         return l;
     }
 
+    /**
+     * Makes the children of a button row share its width equally, each on one
+     * line. Without this a row of three buttons overflows on a narrow phone and
+     * the last label breaks mid-word.
+     */
+    public static LinearLayout spread(LinearLayout row) {
+        Context c = row.getContext();
+        for (int i = 0; i < row.getChildCount(); i++) {
+            View v = row.getChildAt(i);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+            lp.leftMargin = i == 0 ? 0 : dp(c, 8);
+            v.setLayoutParams(lp);
+            if (v instanceof Button) {
+                Button b = (Button) v;
+                b.setSingleLine(true);
+                b.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                b.setMinWidth(0);
+                b.setMinimumWidth(0);
+                b.setPadding(dp(c, 8), b.getPaddingTop(), dp(c, 8), b.getPaddingBottom());
+            }
+        }
+        return row;
+    }
+
     public static LinearLayout card(Context c) {
         LinearLayout l = column(c);
-        l.setPadding(dp(c, 14), dp(c, 12), dp(c, 14), dp(c, 12));
+        l.setPadding(dp(c, 16), dp(c, 14), dp(c, 16), dp(c, 14));
         // ELEV: one step lighter than a section, so nested cards have depth.
-        l.setBackground(round(c, ELEV, 12, LINE));
+        l.setBackground(round(c, ELEV, RADIUS_CARD, LINE));
         return l;
     }
 
@@ -252,7 +331,7 @@ public final class Ui {
         s.setFillViewport(true);
         s.setBackgroundColor(BG);
         LinearLayout body = column(c);
-        body.setPadding(dp(c, 12), dp(c, 10), dp(c, 12), dp(c, 20));
+        body.setPadding(dp(c, 16), dp(c, 12), dp(c, 16), dp(c, 24));
         s.addView(body, new ScrollView.LayoutParams(
                 ScrollView.LayoutParams.MATCH_PARENT,
                 ScrollView.LayoutParams.WRAP_CONTENT));
@@ -269,14 +348,14 @@ public final class Ui {
         if (Double.isNaN(value)) {
             return "-";
         }
-        return String.format("%." + decimals + "f", value);
+        return String.format(Locale.US, "%." + decimals + "f", value);
     }
 
     public static String pct(double value) {
         if (Double.isNaN(value)) {
             return "-";
         }
-        return String.format("%.1f %%", value);
+        return String.format(Locale.US, "%.1f %%", value);
     }
 
     /** "just now", "5 min ago", "2 h ago", "3 d ago" from an epoch-millis time. */
@@ -406,12 +485,13 @@ public final class Ui {
     public static final class Stat extends LinearLayout {
         public final TextView value;
         private final TextView unit;
+        private boolean dimmed = true;
 
         public Stat(Context c, String label) {
             super(c);
             setOrientation(VERTICAL);
             setPadding(dp(c, 12), dp(c, 10), dp(c, 12), dp(c, 10));
-            setBackground(round(c, CARD, 12, LINE));
+            setBackground(round(c, CARD, RADIUS_CARD, LINE));
 
             TextView key = text(c, label.toUpperCase(Locale.ROOT), 10, DIM);
             key.setLetterSpacing(0.06f);
@@ -419,8 +499,7 @@ public final class Ui {
 
             LinearLayout line = row(c);
             line.setPadding(0, dp(c, 3), 0, 0);
-            value = text(c, DASH, 19, TEXT);
-            value.setTypeface(value.getTypeface(), Typeface.BOLD);
+            value = number(text(c, DASH, 22, DIM));
             line.addView(value);
 
             unit = text(c, "", 11, DIM);
@@ -433,11 +512,18 @@ public final class Ui {
 
         public Stat set(String text) {
             Ui.set(value, text);
+            // An empty tile reads as "no data", not as a value: dim the dash.
+            boolean empty = DASH.equals(text) || "-".equals(text);
+            if (empty != dimmed) {
+                dimmed = empty;
+                value.setTextColor(empty ? DIM : TEXT);
+            }
             return this;
         }
 
         public Stat set(String text, int color) {
             set(text);
+            dimmed = false;
             if (value.getCurrentTextColor() != color) {
                 value.setTextColor(color);
             }
@@ -484,7 +570,7 @@ public final class Ui {
     public static Section section(Context c, String title, String subtitle, int accent) {
         LinearLayout card = column(c);
         card.setPadding(dp(c, 16), dp(c, 14), dp(c, 16), dp(c, 14));
-        card.setBackground(round(c, CARD, 14, LINE));
+        card.setBackground(round(c, CARD, RADIUS_CARD, LINE));
 
         LinearLayout head = row(c);
         View stripe = new View(c);

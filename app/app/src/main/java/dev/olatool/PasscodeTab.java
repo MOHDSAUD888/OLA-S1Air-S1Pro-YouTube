@@ -243,11 +243,11 @@ public final class PasscodeTab implements Tab {
                 // Hand it to the Unlock tab (prefill).
                 activity.getApplicationContext().getSharedPreferences("ola", 0)
                         .edit().putString("recovered_pin", pin).apply();
-                status.setText("Recovered in " + String.format("%.1f", secs) + "s.");
+                status.setText("Recovered in " + String.format(java.util.Locale.US, "%.1f", secs) + "s.");
             } else if (cancel.get()) {
                 status.setText("Stopped.");
             } else {
-                status.setText("No 6-digit match in " + String.format("%.1f", secs)
+                status.setText("No 6-digit match in " + String.format(java.util.Locale.US, "%.1f", secs)
                         + "s. The hash may not be a 6-digit PIN.");
             }
         });

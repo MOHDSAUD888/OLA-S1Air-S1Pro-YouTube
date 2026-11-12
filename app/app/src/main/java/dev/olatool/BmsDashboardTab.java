@@ -30,8 +30,8 @@ final class BmsDashboardTab implements Tab, Bus.Listener, CloudState.Listener {
 
     private final TextView statusDot;
     private final TextView statusText;
-    private final TextView updated;
-    private final TextView gps;
+    private final Ui.Kv updated;
+    private final Ui.Kv gps;
     private final TextView socBig;
     private final TextView rangeBig;
     private final ProgressBar socBar;
@@ -59,43 +59,38 @@ final class BmsDashboardTab implements Tab, Bus.Listener, CloudState.Listener {
         // Status card.
         LinearLayout status = Ui.card(activity);
         LinearLayout sRow = Ui.row(activity);
-        statusDot = Ui.text(activity, "●", 14, Ui.DIM);
+        statusDot = Ui.text(activity, "●", 12, Ui.DIM);
         sRow.addView(statusDot);
-        statusText = Ui.text(activity, "Unknown", 18, Ui.TEXT);
-        statusText.setTypeface(statusText.getTypeface(), Typeface.BOLD);
+        statusText = Ui.text(activity, "Unknown", 17, Ui.TEXT);
+        statusText.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         statusText.setPadding(Ui.dp(activity, 8), 0, 0, 0);
         sRow.addView(statusText);
+        sRow.setPadding(0, 0, 0, Ui.dp(activity, 6));
         status.addView(sRow);
-        updated = Ui.note(activity, "Last update: —");
-        updated.setPadding(0, Ui.dp(activity, 8), 0, 0);
+        updated = new Ui.Kv(activity, "Last update");
         status.addView(updated);
-        gps = Ui.note(activity, "GPS: —");
-        gps.setPadding(0, Ui.dp(activity, 4), 0, 0);
+        gps = new Ui.Kv(activity, "GPS");
         status.addView(gps);
         body.addView(status);
 
-        body.addView(Ui.space(activity, 10));
+        body.addView(Ui.space(activity, 12));
 
         // Battery hero.
         LinearLayout hero = Ui.card(activity);
-        hero.setPadding(Ui.dp(activity, 16), Ui.dp(activity, 16),
-                Ui.dp(activity, 16), Ui.dp(activity, 16));
-        TextView label = Ui.text(activity, "BATTERY", 10, Ui.DIM);
+        TextView label = Ui.text(activity, "BATTERY", 11, Ui.DIM);
         label.setLetterSpacing(0.08f);
         hero.addView(label);
         LinearLayout row = Ui.row(activity);
         row.setGravity(Gravity.BOTTOM);
-        socBig = Ui.text(activity, Ui.DASH, 40, Ui.TEXT);
-        socBig.setTypeface(socBig.getTypeface(), Typeface.BOLD);
+        socBig = Ui.number(Ui.text(activity, "--", 44, Ui.DIM));
         row.addView(socBig);
         TextView pct = Ui.text(activity, "%", 18, Ui.DIM);
-        pct.setPadding(Ui.dp(activity, 2), 0, 0, Ui.dp(activity, 6));
+        pct.setPadding(Ui.dp(activity, 4), 0, 0, Ui.dp(activity, 8));
         row.addView(pct);
         LinearLayout rangeCol = Ui.column(activity);
-        rangeBig = Ui.text(activity, Ui.DASH, 20, Ui.TEXT);
-        rangeBig.setTypeface(rangeBig.getTypeface(), Typeface.BOLD);
+        rangeBig = Ui.number(Ui.text(activity, Ui.DASH, 20, Ui.DIM));
         rangeBig.setGravity(Gravity.END);
-        TextView rLbl = Ui.text(activity, "range", 11, Ui.DIM);
+        TextView rLbl = Ui.text(activity, "Range", 11, Ui.DIM);
         rLbl.setGravity(Gravity.END);
         rangeCol.addView(rangeBig);
         rangeCol.addView(rLbl);
@@ -105,14 +100,15 @@ final class BmsDashboardTab implements Tab, Bus.Listener, CloudState.Listener {
         socBar = Ui.bar(activity, Ui.ACCENT);
         LinearLayout.LayoutParams barLp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(activity, 6));
-        barLp.topMargin = Ui.dp(activity, 10);
+        barLp.topMargin = Ui.dp(activity, 12);
         hero.addView(socBar, barLp);
         source = Ui.note(activity, "");
-        source.setPadding(0, Ui.dp(activity, 6), 0, 0);
+        source.setPadding(0, Ui.dp(activity, 8), 0, 0);
+        source.setVisibility(View.GONE);
         hero.addView(source);
         body.addView(hero);
 
-        body.addView(Ui.space(activity, 10));
+        body.addView(Ui.space(activity, 12));
 
         speed = new Ui.Stat(activity, "Speed"); speed.unit("km/h");
         power = new Ui.Stat(activity, "Power"); power.unit("kW");
@@ -186,17 +182,20 @@ final class BmsDashboardTab implements Tab, Bus.Listener, CloudState.Listener {
         statusDot.setTextColor(color);
 
         if (liveData) {
-            updated.setText("Last update: live CAN");
+            updated.set("Live");
         } else if (cs != null && cs.lastUpdated != null) {
-            updated.setText("Last update: " + cs.lastUpdated + " (cloud)");
+            updated.set(cs.lastUpdated + " (cloud)");
         } else {
-            updated.setText("Last update: —");
+            updated.set(Ui.DASH, Ui.DIM);
         }
 
         Double lat = cs != null ? cs.lat : null;
         Double lon = cs != null ? cs.lon : null;
-        gps.setText(lat == null || lon == null ? "GPS: —"
-                : String.format(Locale.ROOT, "GPS: %.4f°, %.4f°", lat, lon));
+        if (lat == null || lon == null) {
+            gps.set(Ui.DASH, Ui.DIM);
+        } else {
+            gps.set(String.format(Locale.ROOT, "%.4f°, %.4f°", lat, lon));
+        }
 
         double soc = s == null ? Double.NaN : s.soc;
         boolean fromCloud = false;
@@ -204,14 +203,17 @@ final class BmsDashboardTab implements Tab, Bus.Listener, CloudState.Listener {
             soc = cs.soc;
             fromCloud = true;
         }
-        socBig.setText(Double.isNaN(soc) ? Ui.DASH : Ui.fmt(soc, 0));
-        socBig.setTextColor(fromCloud ? Ui.INFO : Ui.TEXT);
+        socBig.setText(Double.isNaN(soc) ? "--" : Ui.fmt(soc, 0));
+        socBig.setTextColor(Double.isNaN(soc) ? Ui.DIM : fromCloud ? Ui.INFO : Ui.TEXT);
         Ui.bar(socBar, Double.isNaN(soc) ? 0 : soc / 100.0);
 
         double range = s == null ? Double.NaN : s.rangeKm;
         rangeBig.setText(Double.isNaN(range) ? Ui.DASH : Ui.fmt(range, 0) + " km");
-        source.setText(fromCloud ? "Battery from Ola cloud (scooter asleep)."
-                : liveData ? "Live from the scooter." : "");
+        rangeBig.setTextColor(Double.isNaN(range) ? Ui.DIM : Ui.TEXT);
+        String from = fromCloud ? "Battery from Ola cloud (scooter asleep)."
+                : liveData ? "Live from the scooter." : "";
+        source.setText(from);
+        source.setVisibility(from.isEmpty() ? View.GONE : View.VISIBLE);
 
         speed.set(num(s == null ? Double.NaN : s.speedKph, 1));
         power.set(num(s == null ? Double.NaN : s.powerW() / 1000.0, 2));

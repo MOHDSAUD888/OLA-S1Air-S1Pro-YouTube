@@ -132,8 +132,7 @@ final class VehicleTab implements Tab, Bus.Listener, CloudState.Listener {
         LinearLayout socRow = Ui.row(activity);
         LinearLayout socLeft = Ui.row(activity);
         socLeft.setGravity(Gravity.BOTTOM);
-        socBig = Ui.text(activity, Ui.DASH, 40, Ui.TEXT);
-        socBig.setTypeface(socBig.getTypeface(), Typeface.BOLD);
+        socBig = Ui.number(Ui.text(activity, "--", 44, Ui.DIM));
         socLeft.addView(socBig);
         TextView percent = Ui.text(activity, "%", 18, Ui.DIM);
         percent.setPadding(0, 0, 0, dp(6));
@@ -334,8 +333,8 @@ final class VehicleTab implements Tab, Bus.Listener, CloudState.Listener {
             soc = cs.soc;              // scooter asleep: use the cloud battery
             fromCloud = true;
         }
-        Ui.set(socBig, num(soc, 0));
-        socBig.setTextColor(fromCloud ? Ui.INFO : Ui.TEXT);
+        Ui.set(socBig, Double.isNaN(soc) ? "--" : num(soc, 0));
+        socBig.setTextColor(Double.isNaN(soc) ? Ui.DIM : fromCloud ? Ui.INFO : Ui.TEXT);
         Ui.bar(socBar, soc / 100.0);
 
         double range = d.rangeKm;

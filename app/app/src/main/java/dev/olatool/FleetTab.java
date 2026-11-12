@@ -56,6 +56,8 @@ public final class FleetTab implements Tab {
     private final Map<String, Row> rows = new HashMap<>();
     /** Last battery-health verdict per unit, for the fleet flagged-count summary. */
     private final Map<String, BatteryHealth.Result> lastHealth = new HashMap<>();
+    /** Units that answered their last poll; feeds the home-screen fleet widget. */
+    private final java.util.Set<String> onlineIds = new java.util.HashSet<>();
     private volatile boolean visible;
     private boolean everRefreshed;
 
@@ -249,6 +251,14 @@ public final class FleetTab implements Tab {
         if (row == null) {
             return;   // card was removed while the poll ran
         }
+        if (r.online) {
+            onlineIds.add(id);
+        } else {
+            onlineIds.remove(id);
+        }
+        onlineIds.retainAll(rows.keySet());
+        WidgetData.updateFleet(activity, rows.size(), onlineIds.size());
+        WidgetBase.refreshAll(activity);
         if (!r.online) {
             Ui.pill(row.status, "offline", Ui.BAD);
             Ui.set(row.soc, Ui.DASH);

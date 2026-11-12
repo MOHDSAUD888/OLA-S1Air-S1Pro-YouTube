@@ -122,7 +122,7 @@ public class WebPlayerService extends Service {
         // --- Control bar (top) ---
         LinearLayout bar = new LinearLayout(this);
         bar.setOrientation(LinearLayout.HORIZONTAL);
-        bar.setBackgroundColor(0xDD111111);
+        barBackgroundColor(Ui.PLAYER_BAR);
 
         TextView title = new TextView(this);
         title.setText("  YouTube  ☰ drag");
@@ -141,7 +141,7 @@ public class WebPlayerService extends Service {
 
         // --- Resize grip (bottom-right) ---
         TextView grip = barButton("◢");   // ◢
-        grip.setBackgroundColor(0x55FFFFFF);
+        gripBackgroundColor(Ui.PLAYER_GRIP);
         root.addView(grip, new FrameLayout.LayoutParams(
                 GRIP, GRIP, Gravity.BOTTOM | Gravity.END));
 
@@ -170,7 +170,7 @@ public class WebPlayerService extends Service {
         b.setTextColor(Color.WHITE);
         b.setTextSize(16);
         b.setGravity(Gravity.CENTER);
-        b.setBackgroundColor(0x22FFFFFF);
+        bBackgroundColor(Ui.PLAYER_CAP);
         return b;
     }
 

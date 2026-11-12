@@ -33,7 +33,7 @@ public final class WebMapView extends WebView {
         getSettings().setJavaScriptEnabled(true);
         getSettings().setDomStorageEnabled(true);
         getSettings().setBuiltInZoomControls(false);
-        setBackgroundColor(0xFF15161E);
+        setBackgroundColor(Ui.BG);
         setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {

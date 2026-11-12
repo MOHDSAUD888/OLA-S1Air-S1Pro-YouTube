@@ -196,14 +196,14 @@ public final class BtTab implements Tab {
         filterButton = Ui.button(ctx, "", v -> toggleFilter());
         buttons.addView(filterButton, gap());
         buttons.addView(Ui.button(ctx, "Paired", v -> showBonded()), gap());
-        head.body.addView(buttons);
+        head.body.addView(Ui.spread(buttons));
 
         LinearLayout buttons2 = Ui.row(ctx);
         buttons2.setPadding(0, Ui.dp(ctx, 8), 0, 0);
         buttons2.addView(Ui.button(ctx, "Enable BT", v -> enableBt()));
         buttons2.addView(Ui.button(ctx, "BT settings", v -> openBtSettings()), gap());
         buttons2.addView(Ui.button(ctx, "App perms", v -> openAppSettings()), gap());
-        head.body.addView(buttons2);
+        head.body.addView(Ui.spread(buttons2));
         bindFilterButton();
 
         statusLine = Ui.note(ctx, "");
@@ -255,7 +255,7 @@ public final class BtTab implements Tab {
     }
 
     private void bindFilterButton() {
-        filterButton.setText(s1Only ? "S1 Pro only: ON" : "S1 Pro only: OFF");
+        filterButton.setText(s1Only ? "S1 Pro: on" : "S1 Pro: off");
         filterButton.setTextColor(s1Only ? Ui.ACCENT : Ui.TEXT);
     }
 

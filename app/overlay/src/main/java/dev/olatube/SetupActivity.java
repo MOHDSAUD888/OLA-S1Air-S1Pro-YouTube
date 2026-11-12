@@ -34,6 +34,17 @@ public class SetupActivity extends Activity {
             return;
         }
 
+        // 7-tap launch lock, from Pegasus: am start ... -e feature lock|unlock.
+        // Only flips the persisted flag (and the live service, if any) — never
+        // spawns the service or shows the permission/accessibility prompts.
+        String feature = getIntent() != null ? getIntent().getStringExtra("feature") : null;
+        if (feature != null) {
+            if ("lock".equals(feature)) OverlayService.applyLock(this, true);
+            else if ("unlock".equals(feature)) OverlayService.applyLock(this, false);
+            finish();
+            return;
+        }
+
         boolean canDraw = Build.VERSION.SDK_INT < Build.VERSION_CODES.M
                 || Settings.canDrawOverlays(this);
 

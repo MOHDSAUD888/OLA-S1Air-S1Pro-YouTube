@@ -28,6 +28,7 @@ public final class GroupTab implements Tab {
 
     private boolean visible;
     private int current = -1;
+    private int startAt;
 
     public GroupTab(Context c, String[] labels, Tab[] children) {
         this.children = children;
@@ -40,10 +41,10 @@ public final class GroupTab implements Tab {
         // Segmented selector: a single rounded track holding one chip per child.
         HorizontalScrollView scroll = new HorizontalScrollView(c);
         scroll.setHorizontalScrollBarEnabled(false);
-        scroll.setPadding(Ui.dp(c, 12), Ui.dp(c, 10), Ui.dp(c, 12), Ui.dp(c, 6));
+        scroll.setPadding(Ui.dp(c, 16), Ui.dp(c, 12), Ui.dp(c, 16), Ui.dp(c, 4));
         LinearLayout seg = Ui.row(c);
-        seg.setBackground(Ui.round(c, Ui.CARD, 22, Ui.LINE));
-        seg.setPadding(Ui.dp(c, 4), Ui.dp(c, 4), Ui.dp(c, 4), Ui.dp(c, 4));
+        seg.setBackground(Ui.round(c, Ui.CARD, Ui.RADIUS_CONTROL, Ui.LINE));
+        seg.setPadding(Ui.dp(c, 3), Ui.dp(c, 3), Ui.dp(c, 3), Ui.dp(c, 3));
         for (int i = 0; i < children.length; i++) {
             final int index = i;
             Button b = new Button(c);
@@ -52,7 +53,9 @@ public final class GroupTab implements Tab {
             b.setTextSize(13);
             b.setMinWidth(0);
             b.setMinimumWidth(0);
-            b.setMinHeight(Ui.dp(c, 40));
+            b.setMinHeight(Ui.dp(c, 36));
+            b.setMinimumHeight(Ui.dp(c, 36));
+            b.setStateListAnimator(null);
             b.setPadding(Ui.dp(c, 16), Ui.dp(c, 6), Ui.dp(c, 16), Ui.dp(c, 6));
             Ui.wire(b, v -> select(index));
             segButtons[i] = b;
@@ -76,11 +79,16 @@ public final class GroupTab implements Tab {
         return root;
     }
 
+    /** Sub-screen to open the first time this group is shown. Default: the first. */
+    public void startAt(int index) {
+        startAt = index;
+    }
+
     @Override
     public void onShow() {
         visible = true;
         if (current < 0) {
-            select(0);
+            select(startAt);
         } else {
             children[current].onShow();
         }
@@ -118,11 +126,13 @@ public final class GroupTab implements Tab {
         for (int i = 0; i < segButtons.length; i++) {
             Button b = segButtons[i];
             boolean on = i == current;
-            b.setTextColor(on ? Ui.ON_ACCENT : Ui.DIM);
+            b.setTextColor(on ? Ui.ACCENT : Ui.DIM);
             b.setTypeface(null, on ? android.graphics.Typeface.BOLD
                     : android.graphics.Typeface.NORMAL);
-            b.setBackground(on ? Ui.round(b.getContext(), Ui.ACCENT, 18, 0)
-                    : Ui.round(b.getContext(), 0x00000000, 18, 0));
+            // Tinted, not solid: the solid accent is reserved for the one
+            // primary action on a screen.
+            b.setBackground(on ? Ui.round(b.getContext(), Ui.alpha(Ui.ACCENT, 0x26), 9, 0)
+                    : Ui.round(b.getContext(), 0x00000000, 9, 0));
         }
     }
 }

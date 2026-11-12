@@ -53,6 +53,7 @@ public final class MainActivity extends Activity {
     private Bus bus;
     private EditText address;
     private Button connectButton;
+    private Button disconnectButton;
     private TextView status;
     private FrameLayout content;
     private FrameLayout host;
@@ -63,12 +64,18 @@ public final class MainActivity extends Activity {
     private String connMode = MODE_AUTO;
     private Button modeAuto;
     private Button modeDirect;
+    private TextView connPill;
+    private LinearLayout connPanel;
+    private boolean panelOpen = true;
+    private String connLabel = "Not connected";
+    private int connColor = Ui.DIM;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         bus = new Bus(this, conn);
+        bus.attach(this::feedWidgets);
 
         btTab = new BtTab(this);
 
@@ -113,7 +120,10 @@ public final class MainActivity extends Activity {
         host.addView(buildRoot(), new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         setContentView(host);
-        selectTab(0);
+        // Open straight onto the network scan, which runs itself on show, so the
+        // first thing after launch is the list of devices and which one to join.
+        ((GroupTab) tabs[4]).startAt(1);   // tabs[4] = Bluetooth group; sub 1 = Scan
+        selectTab(4);
 
         if (Lock.anySet(this)) {
             Lock.lockNow();
@@ -126,6 +136,17 @@ public final class MainActivity extends Activity {
             address.setText(saved);
         }
         applyMode(prefs.getString(KEY_MODE, MODE_AUTO), false);
+    }
+
+    private long widgetsFedAt;
+
+    /** Saves the live reading for the home-screen widgets, at most every 30 s. */
+    private void feedWidgets(dev.olatool.core.Live.Snapshot s) {
+        long now = System.currentTimeMillis();
+        if (now - widgetsFedAt >= 30_000 && WidgetData.update(this, s)) {
+            widgetsFedAt = now;
+            WidgetBase.refreshAll(this);
+        }
     }
 
     @Override
@@ -152,6 +173,11 @@ public final class MainActivity extends Activity {
     protected void onStop() {
         super.onStop();
         CloudState.get(this).stop();
+        // Leaving for the home screen is when the widgets get looked at, so
+        // hand them the newest reading and the current fleet size now.
+        WidgetData.update(this, bus.snapshot());
+        WidgetData.syncFleetCount(this, Fleet.load(this).size());
+        WidgetBase.refreshAll(this);
         // Re-lock when the app leaves the foreground, so the gate is needed again.
         if (Lock.anySet(this)) {
             Lock.lockNow();
@@ -284,47 +310,64 @@ public final class MainActivity extends Activity {
         root.setBackgroundColor(Ui.BG);
 
         LinearLayout header = Ui.column(this);
-        header.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 6));
+        header.setPadding(Ui.dp(this, 16), Ui.dp(this, 12), Ui.dp(this, 16), Ui.dp(this, 4));
 
-        TextView title = Ui.text(this, "Pegasus", 20, Ui.TEXT);
-        title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
-        header.addView(title);
+        // App bar: the name, and a pill that both shows the link state and
+        // opens the connection panel. The panel folds away once connected, so
+        // the screens get the room instead of the address field.
+        LinearLayout appBar = Ui.row(this);
+        TextView title = Ui.text(this, "Pegasus", 22, Ui.TEXT);
+        title.setTypeface(android.graphics.Typeface.create("sans-serif-medium",
+                android.graphics.Typeface.NORMAL));
+        appBar.addView(title, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        connPill = Ui.pill(this, "", Ui.DIM);
+        connPill.setTextSize(12);
+        connPill.setGravity(android.view.Gravity.CENTER);
+        connPill.setMinHeight(Ui.dp(this, 36));
+        connPill.setPadding(Ui.dp(this, 14), 0, Ui.dp(this, 14), 0);
+        connPill.setOnClickListener(Ui.haptic(v -> setPanelOpen(!panelOpen)));
+        appBar.addView(connPill);
+        header.addView(appBar);
 
-        TextView subtitle = Ui.note(this,
-                "Talks to the scooter over its root gRPC daemon on TCP 50005.");
-        header.addView(subtitle);
+        connPanel = Ui.column(this);
 
         LinearLayout connectRow = Ui.row(this);
-        connectRow.setPadding(0, Ui.dp(this, 10), 0, 0);
+        connectRow.setPadding(0, Ui.dp(this, 12), 0, 0);
 
         address = new EditText(this);
         address.setHint("scooter IPv4, e.g. 192.168.1.5");
-        address.setTextSize(14);
+        address.setTextSize(15);
         address.setTextColor(Ui.TEXT);
         address.setHintTextColor(Ui.DIM);
         address.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
         address.setSingleLine(true);
-        address.setBackground(Ui.round(this, Ui.CARD, 10, Ui.LINE));
-        address.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 8));
+        address.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        address.setBackground(Ui.round(this, Ui.CARD, Ui.RADIUS_CONTROL, Ui.LINE));
+        address.setPadding(Ui.dp(this, 14), 0, Ui.dp(this, 14), 0);
         connectRow.addView(address, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+                Ui.dp(this, 48), 1f));
 
         connectButton = Ui.accent(this, "Connect", v -> onConnectClicked());
         LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                ViewGroup.LayoutParams.WRAP_CONTENT, Ui.dp(this, 48));
         buttonParams.leftMargin = Ui.dp(this, 8);
         connectRow.addView(connectButton, buttonParams);
-        header.addView(connectRow);
+
+        // Hidden until a link is live; drops the connection but keeps the last
+        // address in the field, so it stays set to the last paired scooter.
+        disconnectButton = Ui.danger(this, "Disconnect", v -> onDisconnect());
+        LinearLayout.LayoutParams disconnectParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, Ui.dp(this, 48));
+        disconnectParams.leftMargin = Ui.dp(this, 8);
+        disconnectButton.setVisibility(View.GONE);
+        connectRow.addView(disconnectButton, disconnectParams);
+        connPanel.addView(connectRow);
 
         HorizontalScrollView modeScroll = new HorizontalScrollView(this);
         modeScroll.setHorizontalScrollBarEnabled(false);
         modeScroll.setPadding(0, Ui.dp(this, 10), 0, 0);
         LinearLayout modeRow = Ui.row(this);
-        TextView modeLabel = Ui.note(this, "Connect via");
-        LinearLayout.LayoutParams lblParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lblParams.rightMargin = Ui.dp(this, 8);
-        modeRow.addView(modeLabel, lblParams);
         modeAuto = modeChip("Auto", () -> applyMode(MODE_AUTO, true));
         modeDirect = modeChip("Direct IP / IPv6", () -> applyMode(MODE_DIRECT, true));
         LinearLayout.LayoutParams chipGap = new LinearLayout.LayoutParams(
@@ -332,15 +375,17 @@ public final class MainActivity extends Activity {
         chipGap.rightMargin = Ui.dp(this, 8);
         modeRow.addView(modeAuto, chipGap);
         modeRow.addView(modeDirect, chipGap);
-        Button savedButton = modeChip("★ Saved", this::showSavedDialog);
+        Button savedButton = modeChip("\u2605 Saved", this::showSavedDialog);
         styleModeChip(savedButton, false);
         modeRow.addView(savedButton);
         modeScroll.addView(modeRow);
-        header.addView(modeScroll);
+        connPanel.addView(modeScroll);
 
-        status = Ui.note(this, "Not connected. Join the scooter's Wi-Fi, then press Connect.");
-        status.setPadding(0, Ui.dp(this, 8), 0, 0);
-        header.addView(status);
+        status = Ui.note(this, "Join the scooter's Wi-Fi, enter its address, then press Connect.");
+        status.setPadding(0, Ui.dp(this, 10), 0, Ui.dp(this, 4));
+        connPanel.addView(status);
+        header.addView(connPanel);
+        paintPill();
 
         root.addView(header);
 
@@ -348,15 +393,16 @@ public final class MainActivity extends Activity {
         barScroll.setHorizontalScrollBarEnabled(false);
         barScroll.setBackgroundColor(Ui.BG);
         LinearLayout bar = Ui.row(this);
-        bar.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), Ui.dp(this, 6));
+        bar.setPadding(Ui.dp(this, 4), 0, Ui.dp(this, 4), 0);
         for (int i = 0; i < TAB_NAMES.length; i++) {
             final int index = i;
             Button b = new Button(this);
             b.setText(TAB_NAMES[i]);
             b.setAllCaps(false);
-            b.setTextSize(12);
+            b.setTextSize(14);
             b.setMinWidth(0);
             b.setMinimumWidth(0);
+            b.setStateListAnimator(null);
             b.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 8));
             b.setBackgroundColor(Color.TRANSPARENT);
             Ui.wire(b, v -> selectTab(index));
@@ -394,12 +440,12 @@ public final class MainActivity extends Activity {
         content.addView(tabs[index].view(), new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         for (int i = 0; i < tabButtons.length; i++) {
-            tabButtons[i].setTextColor(i == index ? Ui.ACCENT : Ui.DIM);
-            tabButtons[i].setTypeface(null,
-                    i == index ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+            tabButtons[i].setTextColor(i == index ? Ui.TEXT : Ui.DIM);
+            tabButtons[i].setTypeface(android.graphics.Typeface.create(
+                    i == index ? "sans-serif-medium" : "sans-serif",
+                    android.graphics.Typeface.NORMAL));
             if (i == index) {
-                tabButtons[i].setBackground(Ui.round(this,
-                        Ui.alpha(Ui.ACCENT, 0x1A), 20, Ui.alpha(Ui.ACCENT, 0x55)));
+                tabButtons[i].setBackground(Ui.underline(this, Ui.ACCENT));
             } else {
                 tabButtons[i].setBackgroundColor(Color.TRANSPARENT);
             }
@@ -497,6 +543,7 @@ public final class MainActivity extends Activity {
     private void runConnect(String typed, ResultSupplier supplier) {
         connectButton.setEnabled(false);
         setStatus("Connecting to " + typed + " ...", Ui.DIM);
+        setConn("Connecting\u2026", Ui.INFO);
 
         new Thread(() -> {
             try {
@@ -506,8 +553,12 @@ public final class MainActivity extends Activity {
                 runOnUiThread(() -> {
                     connectButton.setEnabled(true);
                     connectButton.setText("Reconnect");
+                    disconnectButton.setVisibility(View.VISIBLE);
                     setStatus((result.ipv6 ? "IPv6  " : "IPv4  ") + result.target
                             + "\n" + result.note, result.ipv6 ? Ui.ACCENT : Ui.WARN);
+                    setConn(result.ipv6 ? "Connected \u00B7 IPv6" : "Connected \u00B7 IPv4",
+                            result.ipv6 ? Ui.ACCENT : Ui.WARN);
+                    setPanelOpen(false);
                     if (current >= 0) {
                         tabs[current].onHide();
                         tabs[current].onShow();
@@ -516,10 +567,31 @@ public final class MainActivity extends Activity {
             } catch (Exception e) {
                 runOnUiThread(() -> {
                     connectButton.setEnabled(true);
+                    setConn("Not connected", Ui.BAD);
                     setStatus(e.getMessage(), Ui.BAD);
                 });
             }
         }, "connect").start();
+    }
+
+    /**
+     * Drops the live link on user request. Uses {@link Conn#clear()} (not
+     * {@code close()}, which kills the IO thread for good) so a later Connect
+     * works, and leaves the saved address untouched so the field stays on the
+     * last paired scooter.
+     */
+    private void onDisconnect() {
+        bus.stop();
+        conn.clear();
+        connectButton.setText("Connect");
+        disconnectButton.setVisibility(View.GONE);
+        setConn("Not connected", Ui.DIM);
+        setStatus("Disconnected. Last address kept — press Connect to reconnect.", Ui.DIM);
+        setPanelOpen(true);
+        if (current >= 0) {
+            tabs[current].onHide();
+            tabs[current].onShow();
+        }
     }
 
     // -------------------------------------------------------- connection mode
@@ -533,7 +605,10 @@ public final class MainActivity extends Activity {
         b.setMinimumWidth(0);
         b.setMinHeight(0);
         b.setMinimumHeight(0);
-        b.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), Ui.dp(this, 6));
+        b.setPadding(Ui.dp(this, 14), 0, Ui.dp(this, 14), 0);
+        b.setMinHeight(Ui.dp(this, 36));
+        b.setMinimumHeight(Ui.dp(this, 36));
+        b.setStateListAnimator(null);
         Ui.wire(b, v -> onClick.run());
         return b;
     }
@@ -568,11 +643,11 @@ public final class MainActivity extends Activity {
         if (selected) {
             b.setTextColor(Ui.ACCENT);
             b.setTypeface(null, android.graphics.Typeface.BOLD);
-            b.setBackground(Ui.round(this, Ui.alpha(Ui.ACCENT, 0x1A), 16, Ui.alpha(Ui.ACCENT, 0x55)));
+            b.setBackground(Ui.round(this, Ui.alpha(Ui.ACCENT, 0x1A), 18, Ui.alpha(Ui.ACCENT, 0x55)));
         } else {
             b.setTextColor(Ui.DIM);
             b.setTypeface(null, android.graphics.Typeface.NORMAL);
-            b.setBackground(Ui.round(this, Ui.CARD, 16, Ui.LINE));
+            b.setBackground(Ui.round(this, Ui.CARD, 18, Ui.LINE));
         }
     }
 
@@ -665,6 +740,26 @@ public final class MainActivity extends Activity {
     private void setStatus(String text, int color) {
         status.setText(text);
         status.setTextColor(color);
+        // A warning or an error must not sit unseen inside a folded panel.
+        if (color == Ui.WARN || color == Ui.BAD) {
+            setPanelOpen(true);
+        }
+    }
+
+    private void setConn(String label, int color) {
+        connLabel = label;
+        connColor = color;
+        paintPill();
+    }
+
+    private void setPanelOpen(boolean open) {
+        panelOpen = open;
+        connPanel.setVisibility(open ? View.VISIBLE : View.GONE);
+        paintPill();
+    }
+
+    private void paintPill() {
+        Ui.pill(connPill, "\u25CF  " + connLabel + (panelOpen ? "  \u25B4" : "  \u25BE"), connColor);
     }
 
     /** Used by the tabs to complain in the header instead of silently failing. */

@@ -75,10 +75,19 @@ public class OverlayService extends Service {
 
     static OverlayService INSTANCE;
 
+    /** Prefs file + key for the 7-tap lock, shared with {@link SetupActivity}. */
+    static final String PREFS = "yt";
+    static final String KEY_LOCKED = "locked";
+
     private WindowManager wm;
     private TileView zone;                 // launch zone (dash only)
     private ControlView backBtn, closeBtn; // fullscreen SmartTube controls
     private boolean zoneAdded, controlsAdded;
+
+    /** When true, the 7-tap gesture is disabled (Pegasus "Lock 7-tap"). The tap
+     *  is still consumed so it never leaks to Kanzi, but YouTube is not launched.
+     *  Persisted in {@link #PREFS} so it survives a reboot / service restart. */
+    private volatile boolean locked;
 
     private final android.os.Handler ui =
             new android.os.Handler(android.os.Looper.getMainLooper());
@@ -109,6 +118,16 @@ public class OverlayService extends Service {
         if (s != null) s.enterDashState();
     }
 
+    /** Lock or unlock the 7-tap launch. Persists the flag (so it survives a
+     *  reboot) and, if the service is running, applies it immediately. Called by
+     *  {@link SetupActivity} from the {@code -e feature lock|unlock} command. */
+    static void applyLock(Context ctx, boolean lock) {
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .edit().putBoolean(KEY_LOCKED, lock).apply();
+        OverlayService s = INSTANCE;
+        if (s != null) s.locked = lock;
+    }
+
     /** Show the controls whenever SmartTube is in front, however it was opened
      *  (called by the a11y service on a SmartTube window event). Safe: only
      *  SmartTube events reach here, so the dash's IME/dialogs never remove them. */
@@ -123,6 +142,9 @@ public class OverlayService extends Service {
         super.onCreate();
         INSTANCE = this;
         wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+        // Restore the lock state set before the last reboot / service restart.
+        locked = getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getBoolean(KEY_LOCKED, false);
         goForeground();
         // Assume the dash is in front at start; the a11y service corrects this.
         addZone();
@@ -185,6 +207,7 @@ public class OverlayService extends Service {
             boolean inWindow = now - taps[0] <= TAP_WINDOW_MS;
             tapCount = 0;
             if (inWindow) {
+                if (locked) return true;      // 7-tap locked: swallow, do not launch
                 zone.setShowLogo(true);       // brief confirmation flash
                 launchYouTube();
                 ui.removeCallbacksAndMessages(null);
@@ -340,11 +363,11 @@ public class OverlayService extends Service {
             float pad = w * 0.10f;
 
             paint.setStyle(Paint.Style.FILL);
-            paint.setColor(0xCC202124);
+            paint.setColor(Ui.OVERLAY_PLATE);
             rect.set(pad * 0.3f, pad * 0.3f, w - pad * 0.3f, h - pad * 0.3f);
             canvas.drawRoundRect(rect, w * 0.22f, w * 0.22f, paint);
 
-            paint.setColor(0xFFFF0000);
+            paint.setColor(Ui.OVERLAY_RED);
             float ry = h * 0.30f;
             rect.set(pad, ry, w - pad, h - ry);
             float r = (h - 2 * ry) * 0.35f;
@@ -380,7 +403,7 @@ public class OverlayService extends Service {
             this.kind = kind;
             setClickable(true);
             plate.setStyle(Paint.Style.FILL);
-            plate.setColor(0xAA000000);          // ~67% black backing (clearly visible)
+            plate.setColor(Ui.OVERLAY_BLACK);          // ~67% black backing (clearly visible)
             ink.setStyle(Paint.Style.STROKE);
             ink.setColor(0xFFFFFFFF);            // solid white icon
             ink.setStrokeCap(Paint.Cap.ROUND);

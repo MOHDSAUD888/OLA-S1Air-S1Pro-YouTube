@@ -43,6 +43,7 @@ public final class ScanTab implements Tab {
     private LinearLayout list;
 
     private volatile boolean scanning;
+    private boolean scannedOnce;
     private ExecutorService pool;
 
     public ScanTab(Context ctx) {
@@ -58,6 +59,12 @@ public final class ScanTab implements Tab {
 
     @Override
     public void onShow() {
+        // Scan the moment the user opens this screen, so devices appear without
+        // a tap. Once only: re-scan is manual, to avoid sweeping on every switch.
+        if (!scannedOnce) {
+            scannedOnce = true;
+            onScan();
+        }
     }
 
     @Override
@@ -153,6 +160,11 @@ public final class ScanTab implements Tab {
 
     private void finish(int found) {
         scanning = false;
+        // Release the 48 worker threads; a fixed pool keeps them alive until
+        // shutdown, so without this each completed scan would leak a poolful.
+        if (pool != null) {
+            pool.shutdown();
+        }
         if (scanButton != null) {
             scanButton.setText("Scan network");
         }
@@ -205,6 +217,25 @@ public final class ScanTab implements Tab {
                 ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
         card.addView(row);
+
+        // Tell the user, per device, whether the app can connect to it. Only the
+        // scooter (port 50005) is connectable; show a Connect button for it.
+        boolean connectable = "Scooter".equals(type);
+        TextView can = Ui.text(ctx,
+                connectable ? "✓ Ready to connect" : "Can’t connect — not a scooter",
+                12, connectable ? Ui.ACCENT : Ui.DIM);
+        can.setPadding(0, Ui.dp(ctx, 8), 0, 0);
+        card.addView(can);
+
+        if (connectable && ctx instanceof MainActivity) {
+            final String target = ip;
+            Button connect = Ui.accent(ctx, "Connect", v -> ((MainActivity) ctx).connectTo(target));
+            LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            cp.topMargin = Ui.dp(ctx, 8);
+            card.addView(connect, cp);
+        }
+
         list.addView(card);
     }
 
@@ -319,7 +350,7 @@ public final class ScanTab implements Tab {
             case "iPhone":
                 return Ui.INFO;
             case "TV / cast":
-                return 0xFFB98BFF;
+                return Ui.LILAC;
             default:
                 return Ui.DIM;
         }
