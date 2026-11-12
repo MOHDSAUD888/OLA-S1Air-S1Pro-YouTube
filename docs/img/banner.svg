@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" width="1200" height="300" role="img" aria-label="Ola S1 Air / S1 Pro — Head Unit Reverse Engineering" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0e13"/>
+      <stop offset="0.55" stop-color="#0d1117"/>
+      <stop offset="1" stop-color="#10151c"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.82" cy="0.08" r="0.95">
+      <stop offset="0" stop-color="#ff6a00" stop-opacity="0.22"/>
+      <stop offset="0.5" stop-color="#ff6a00" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#ff6a00" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="0.1" cy="1" r="0.8">
+      <stop offset="0" stop-color="#3ddc84" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#3ddc84" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="play" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff5630"/>
+      <stop offset="1" stop-color="#e11900"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="300" fill="url(#bg)"/>
+  <rect width="1200" height="300" fill="url(#glow)"/>
+  <rect width="1200" height="300" fill="url(#glow2)"/>
+
+  <!-- faint frame grid -->
+  <g stroke="#ffffff" stroke-opacity="0.035" stroke-width="1">
+    <line x1="0" y1="60" x2="1200" y2="60"/>
+    <line x1="0" y1="240" x2="1200" y2="240"/>
+    <line x1="60" y1="0" x2="60" y2="300"/>
+    <line x1="1140" y1="0" x2="1140" y2="300"/>
+  </g>
+  <!-- orange corner ticks -->
+  <g stroke="#ff6a00" stroke-opacity="0.55" stroke-width="2" stroke-linecap="round">
+    <path d="M60 48 v24 M48 60 h24"/>
+    <path d="M1140 48 v24 M1128 60 h24"/>
+    <path d="M60 228 v24 M48 240 h24"/>
+    <path d="M1140 228 v24 M1128 240 h24"/>
+  </g>
+
+  <!-- lightning mark -->
+  <path transform="translate(102,84) scale(2.0)" d="M13 1 L4 15 h6 l-2 9 11 -13 h-6 l3 -11 z" fill="#ff6a00"/>
+
+  <!-- eyebrow -->
+  <text x="148" y="113" font-size="19" letter-spacing="4" fill="#ff8a3d" font-weight="700">OLA&#160;S1&#160;AIR&#160;&#160;·&#160;&#160;S1&#160;PRO</text>
+
+  <!-- title -->
+  <text x="100" y="176" font-size="54" font-weight="800" fill="#e6edf3">Head Unit Reverse Engineering</text>
+
+  <!-- tagline -->
+  <text x="102" y="214" font-size="21" fill="#9aa4b2">Root over IPv6&#160;&#160;·&#160;&#160;read the whole CAN bus&#160;&#160;·&#160;&#160;run YouTube on the dash</text>
+
+  <!-- play badge (the YouTube hook) -->
+  <g transform="translate(980,104)">
+    <rect x="0" y="0" width="96" height="66" rx="16" fill="url(#play)"/>
+    <path d="M38 21 l28 12 l-28 12 z" fill="#ffffff"/>
+  </g>
+  <text x="1028" y="196" font-size="14" letter-spacing="1" fill="#8b949e" text-anchor="middle">your own scooter</text>
+</svg>

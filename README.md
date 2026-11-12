@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/img/banner.svg" alt="Ola S1 Air / S1 Pro — Head Unit Reverse Engineering" width="100%">
+
 # ⚡ Ola S1 Air / S1 Pro — Head Unit Reverse Engineering
 
 ### Your scooter's dashboard is a full Android computer. Here's how you take the keys back.
@@ -38,6 +40,8 @@ run anything you hand it. Here, it's running **YouTube**. &nbsp;[**See how →**
 This is a lab notebook, not a product. Every command here was run on an owner's own
 Ola S1 — **tested on the S1 Air and S1 Pro** (E2 platform, software `5.6.1`) — over
 the local network, with nothing flashed and no partition ever written.
+
+> _"What I cannot take apart, I do not truly own."_ — with apologies to Richard Feynman
 
 The whole thing turns on one detail. The dashboard runs a root daemon that answers
 on an open port, and the firewall hiding it only covers IPv4. Walk in over **IPv6**
