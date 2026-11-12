@@ -2,9 +2,11 @@
 
 # ⚡ Ola S1 Air / S1 Pro — Head Unit Reverse Engineering
 
-**▶️ Run YouTube on the dash — root it over IPv6, read the whole CAN bus, open Android on the screen.**
+### Your scooter's dashboard is a full Android computer. Here's how you take the keys back.
 
-_No flashing. No keys. No cloud. Your own scooter only._
+**Root it over IPv6 · read every byte on the CAN bus · and yes — play YouTube on the dash.**
+
+_No flashing. No keys. No cloud. No bricking. Your own scooter, every step reversible._
 
 <br/>
 
@@ -18,11 +20,11 @@ _No flashing. No keys. No cloud. Your own scooter only._
 
 <br/>
 
-### ▶️ Featured — YouTube, playing on the scooter's dashboard
+### ▶️ The party trick: YouTube, full-screen on the dashboard
 
-The dash is Android under the hood. With the root access this repo documents, it
-runs ordinary apps — so it plays **full-screen YouTube** on the same screen that
-normally only shows speed, battery and maps. &nbsp;[**See how →**](#youtube-on-the-dashboard)
+The screen that only ever showed speed, battery and a map is a stock Android head
+unit wearing Ola's UI. Get root — one IPv6 firewall gap, no password — and it will
+run anything you hand it. Here, it's running **YouTube**. &nbsp;[**See how →**](#youtube-on-the-dashboard)
 
 <!-- 📸 THE money shot: drop a photo or GIF of YouTube on the dash right here.
      Save it to docs/img/ and uncomment:
@@ -33,17 +35,21 @@ normally only shows speed, battery and maps. &nbsp;[**See how →**](#youtube-on
 
 ---
 
-Notes from taking apart the dashboard of an Ola S1 — **tested on the S1 Air and
-S1 Pro** (E2 platform, software `5.6.1`). This is a lab notebook, not a product.
-Everything here was done on an owner's own scooter, over the local network, with
-no flashing and no partition writes.
+This is a lab notebook, not a product. Every command here was run on an owner's own
+Ola S1 — **tested on the S1 Air and S1 Pro** (E2 platform, software `5.6.1`) — over
+the local network, with nothing flashed and no partition ever written.
 
-**What you get:** a root shell on the dashboard over IPv6, a one-click script that
-opens Android Settings on the scooter, the full CAN map, the HMI architecture, and
-a repeatable method for doing the same on your own unit Without Touching the scooty.
+The whole thing turns on one detail. The dashboard runs a root daemon that answers
+on an open port, and the firewall hiding it only covers IPv4. Walk in over **IPv6**
+and you get a root shell with no password, no pairing, and no button to press. From
+there the scooter opens up: read the battery down to its 14 cells, watch the CAN bus
+live, open Android Settings on the screen, mirror the display to your PC, or launch
+YouTube on the dash.
 
-**No keys, passwords, tokens or personal data are in this repo.** You make your
-own adb key. Nothing here can impersonate a vehicle or a cloud account.
+**Nothing in this repo can hurt your scooter — or anyone else's.** No keys,
+passwords or tokens are stored here. You make your own adb key, nothing can
+impersonate a vehicle or a cloud account, and every change is reversible — a reboot
+undoes it anyway.
 
 > New here? The full walkthrough is [How to do it yourself — zero to real
 > adb](#how-to-do-it-yourself--zero-to-real-adb).
