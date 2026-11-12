@@ -57,4 +57,7 @@
     <path d="M38 21 l28 12 l-28 12 z" fill="#ffffff"/>
   </g>
   <text x="1028" y="196" font-size="14" letter-spacing="1" fill="#8b949e" text-anchor="middle">your own scooter</text>
+
+  <!-- author credit -->
+  <text x="1138" y="273" font-size="15" fill="#6b7482" text-anchor="end">by Mohd Saud&#160;&#160;·&#160;&#160;github.com/MOHDSAUD888</text>
 </svg>

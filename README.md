@@ -10,6 +10,8 @@
 
 _No flashing. No keys. No cloud. No bricking. Your own scooter, every step reversible._
 
+**by [Mohd Saud](https://github.com/MOHDSAUD888)**
+
 <br/>
 
 ![Tested on](https://img.shields.io/badge/tested%20on-Ola%20S1%20Air%20%C2%B7%20S1%20Pro-ff6a00?style=flat-square)
@@ -819,3 +821,15 @@ this. The authors are not. See [DISCLAIMER.md](DISCLAIMER.md).
 ## License
 
 MIT for the scripts and docs. See [LICENSE](LICENSE).
+
+---
+
+<div align="center">
+
+**Built and researched by [Mohd Saud](https://github.com/MOHDSAUD888)**
+
+Ola S1 Air / S1 Pro head-unit reverse engineering · [github.com/MOHDSAUD888](https://github.com/MOHDSAUD888)
+
+_If this helped, a ⭐ on the repo is appreciated._
+
+</div>
