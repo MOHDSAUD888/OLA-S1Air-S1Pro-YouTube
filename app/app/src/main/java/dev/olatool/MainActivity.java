@@ -107,7 +107,7 @@ public final class MainActivity extends Activity {
                 new String[]{"Bluetooth", "Scan"},
                 new Tab[]{btTab, new ScanTab(this)});
         tabs[5] = new GroupTab(this,
-                new String[]{"ADB", "Dev", "TechPack", "Mode", "Passcode", "Unlock", "Mirror", "Project"},
+                new String[]{"ADB", "Dev", "TechPack", "Mode", "Passcode", "Unlock", "Mirror", "Project", "Update"},
                 new Tab[]{new AdbTab(this, conn),
                         new DevTab(this, conn, bus),
                         new TechPackTab(this, conn),
@@ -115,7 +115,8 @@ public final class MainActivity extends Activity {
                         new PasscodeTab(this, conn),
                         new UnlockTab(this, conn),
                         new MirrorTab(this, conn),
-                        new ProjectionTab(this, conn)});
+                        new ProjectionTab(this, conn),
+                        new UpdateTab(this)});
         tabs[6] = new SettingsTab(this, conn);
 
         host = new FrameLayout(this);

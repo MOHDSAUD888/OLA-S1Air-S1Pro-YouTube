@@ -10,6 +10,10 @@
     <!-- Low-battery / charge-complete alerts (Android 13+ asks at runtime). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Self-update: install the latest Pegasus APK pulled from GitHub (the
+         Tools > Update screen). The user still confirms each install. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <!-- Bluetooth pairing/inspection. New split perms on Android 12+ (asked at
          runtime); legacy perms for Android 11 and below. neverForLocation keeps
          BLE scanning from requiring location on 12+. -->
