@@ -1,0 +1,74 @@
+name: Build Pegasus APK
+
+# Phone-only workflow: edit + commit from the phone (GitHub app or the web
+# editor at github.dev), this builds the debug APK in the cloud, and attaches
+# it to a rolling "latest-debug" release you can tap to install. No laptop.
+#
+# Trigger it by pushing to main, or manually from the Actions tab
+# ("Run workflow") — the manual button works from a mobile browser too.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'app/**'
+      - '.github/workflows/build-pegasus.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to publish/update the rolling release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app   # the Gradle project lives under app/
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'     # AGP 8.7 needs 17; app still targets Java 11 bytecode
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK packages
+        run: sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Core self-test (fails the build if parsing/crypto breaks)
+        run: ./gradlew :cli:run --args="selftest" --console=plain
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug --console=plain
+
+      - name: Name the APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk Pegasus-debug.apk
+
+      # Paths below are relative to the repo root, not the working-directory.
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pegasus-debug-apk
+          path: app/Pegasus-debug.apk
+          if-no-files-found: error
+
+      - name: Publish rolling debug release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-debug
+          name: Pegasus debug (latest)
+          prerelease: true
+          files: app/Pegasus-debug.apk
+          body: |
+            Auto-built debug APK from the latest push to main.
+            On your phone: tap the asset below, allow "install unknown apps",
+            then open Pegasus and use Root shell → Pick & install APK to push
+            anything onto the dash over the gRPC channel.
