@@ -250,6 +250,11 @@ public final class AdbTab implements Tab {
         note.setPadding(0, 0, 0, Ui.dp(activity, 8));
         card.addView(note);
 
+        // One tap: the dash pulls and installs all three apps itself.
+        card.addView(Ui.accent(activity, "⬇  Install / update ALL on dash",
+                v -> installAll()), topMargin(0));
+        card.addView(Ui.note(activity, "…or one at a time:"), topMargin(8));
+
         LinearLayout row = Ui.row(activity);
         row.addView(Ui.button(activity, "S1 Nav", v -> installUrl(NAV_URL, "com.saud.ball")), weight());
         row.addView(Ui.button(activity, "Android Auto",
@@ -281,6 +286,34 @@ public final class AdbTab implements Tab {
         urlResult.setPadding(0, Ui.dp(activity, 8), 0, 0);
         card.addView(urlResult);
         return card;
+    }
+
+    private void installAll() {
+        if (!Access.require(activity, Access.ADMIN)) {
+            return;
+        }
+        if (!conn.ready()) {
+            urlResult.setText("Connect to the scooter first.");
+            urlResult.setTextColor(Ui.WARN);
+            return;
+        }
+        urlResult.setTextColor(Ui.DIM);
+        urlResult.setText("Dash is downloading + installing all three…");
+        final String[] urls = {NAV_URL, AA_URL, CP_URL};
+        final String[] pkgs = {"com.saud.ball", "com.saud.androidauto", "com.saud.openplay"};
+        conn.run(rpc -> rpc.installManyFromUrls(urls, pkgs, 600_000), (out, error) -> {
+            if (error != null) {
+                urlResult.setText("Failed: " + error.getMessage());
+                urlResult.setTextColor(Ui.BAD);
+                return;
+            }
+            boolean ok = out != null
+                    && out.toLowerCase(java.util.Locale.ROOT).contains("success");
+            urlResult.setText(out == null || out.trim().isEmpty()
+                    ? "(no output — is the dash online, with curl/wget?)"
+                    : out.trim());
+            urlResult.setTextColor(ok ? Ui.ACCENT : Ui.WARN);
+        });
     }
 
     private void installUrl(String url, String pkg) {

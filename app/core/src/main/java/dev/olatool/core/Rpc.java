@@ -560,6 +560,39 @@ public final class Rpc implements Closeable {
         return out;
     }
 
+    /**
+     * One tap, many apps: the dash downloads and installs each URL in turn and
+     * grants the overlay/write-settings ops, all in a single script so it is one
+     * round trip. {@code pkgs[i]} pairs with {@code urls[i]} (may be null to skip
+     * the grant). Returns the combined per-app log.
+     */
+    public String installManyFromUrls(String[] urls, String[] pkgs, long timeoutMs) {
+        StringBuilder b = new StringBuilder();
+        b.append("#!/system/bin/sh\n");
+        b.append("OUT=/data/local/tmp/pegasus_url.apk\n");
+        b.append("dl(){\n");
+        b.append("  if command -v curl >/dev/null 2>&1; then curl -L -s -o \"$OUT\" \"$1\";\n");
+        b.append("  elif command -v wget >/dev/null 2>&1; then wget -O \"$OUT\" \"$1\" || toybox wget -O \"$OUT\" \"$1\";\n");
+        b.append("  else echo NO_DOWNLOADER; return 1; fi\n");
+        b.append("}\n");
+        for (int i = 0; i < urls.length; i++) {
+            String url = "'" + urls[i].replace("'", "") + "'";
+            String pkg = (pkgs != null && i < pkgs.length && pkgs[i] != null)
+                    ? pkgs[i].replaceAll("[^A-Za-z0-9_.]", "") : "";
+            b.append("echo \"== ").append(pkg.isEmpty() ? ("app " + (i + 1)) : pkg).append(" ==\"\n");
+            b.append("rm -f \"$OUT\"\n");
+            b.append("dl ").append(url).append("\n");
+            b.append("if [ -s \"$OUT\" ]; then pm install -r -g \"$OUT\";");
+            if (!pkg.isEmpty()) {
+                b.append(" appops set ").append(pkg).append(" SYSTEM_ALERT_WINDOW allow 2>/dev/null;");
+                b.append(" appops set ").append(pkg).append(" WRITE_SETTINGS allow 2>/dev/null;");
+            }
+            b.append(" else echo \"  download failed\"; fi\n");
+        }
+        b.append("rm -f \"$OUT\"\n");
+        return runScript("pegasus-url-install-all.sh", b.toString(), timeoutMs);
+    }
+
     // --------------------------------------------------------------- resolver
 
     private static void installResolver() {
