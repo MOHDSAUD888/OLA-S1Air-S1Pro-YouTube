@@ -38,12 +38,23 @@ public final class AdbTab implements Tab {
     private static final String KEY_PUBLIC = "adb_public_pem";
     private static final String KEY_PREVIOUS = "adb_previous_mode";
 
+    // Release assets the dash can pull on its own (see the "Dash self-install"
+    // card). The dash downloads straight from GitHub over whatever Wi-Fi it is
+    // on, so the APK bytes never pass through the phone.
+    private static final String REL =
+            "https://github.com/MOHDSAUD888/OLA-S1Air-S1Pro-YouTube/releases/download/";
+    private static final String NAV_URL = REL + "s1mods-apks/Pegasus-S1Nav.apk";
+    private static final String AA_URL = REL + "s1mods-apks/Pegasus-AndroidAuto.apk";
+    private static final String CP_URL = REL + "s1mods-apks/Pegasus-CarPlay.apk";
+
     private final MainActivity activity;
     private final Conn conn;
     private final ScrollView page;
     private EditText input;
     private TextView output;
     private TextView adbResult;
+    private EditText urlInput;
+    private TextView urlResult;
 
     public AdbTab(MainActivity activity, Conn conn) {
         this.activity = activity;
@@ -58,6 +69,8 @@ public final class AdbTab implements Tab {
         body.addView(provisioning(), topMargin(0));
 
         body.addView(installCard(), topMargin(10));
+
+        body.addView(urlInstallCard(), topMargin(10));
 
         body.addView(Ui.heading(activity, "Command"));
 
@@ -223,6 +236,90 @@ public final class AdbTab implements Tab {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    // ------------------------------------------------- dash self-install (URL)
+
+    private View urlInstallCard() {
+        LinearLayout card = Ui.card(activity);
+        card.addView(Ui.heading(activity, "Dash self-install (from URL)"));
+        TextView note = Ui.note(activity,
+                "The dash downloads the APK itself and installs it — the phone never "
+                        + "handles the file. Put the dash on a Wi-Fi with internet (e.g. "
+                        + "this phone's hotspot) first. Needs curl or wget on the dash.");
+        note.setPadding(0, 0, 0, Ui.dp(activity, 8));
+        card.addView(note);
+
+        LinearLayout row = Ui.row(activity);
+        row.addView(Ui.button(activity, "S1 Nav", v -> installUrl(NAV_URL, "com.saud.ball")), weight());
+        row.addView(Ui.button(activity, "Android Auto",
+                v -> installUrl(AA_URL, "com.saud.androidauto")), weightGap());
+        card.addView(row, topMargin(4));
+        card.addView(Ui.button(activity, "CarPlay",
+                v -> installUrl(CP_URL, "com.saud.openplay")), topMargin(8));
+
+        urlInput = new EditText(activity);
+        urlInput.setHint("https://…/app.apk  (custom URL)");
+        urlInput.setSingleLine(true);
+        urlInput.setTextSize(12);
+        urlInput.setTextColor(Ui.TEXT);
+        urlInput.setHintTextColor(Ui.DIM);
+        urlInput.setTypeface(android.graphics.Typeface.MONOSPACE);
+        urlInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI
+                | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        urlInput.setBackground(Ui.round(activity, Ui.CARD, 10, Ui.LINE));
+        urlInput.setPadding(Ui.dp(activity, 12), Ui.dp(activity, 10),
+                Ui.dp(activity, 12), Ui.dp(activity, 10));
+        card.addView(urlInput, topMargin(8));
+
+        card.addView(Ui.accent(activity, "Download on dash & install",
+                v -> installUrl(urlInput.getText().toString().trim(), null)), topMargin(8));
+
+        urlResult = Ui.text(activity, "", 11, Ui.DIM);
+        urlResult.setTypeface(android.graphics.Typeface.MONOSPACE);
+        urlResult.setTextIsSelectable(true);
+        urlResult.setPadding(0, Ui.dp(activity, 8), 0, 0);
+        card.addView(urlResult);
+        return card;
+    }
+
+    private void installUrl(String url, String pkg) {
+        if (!Access.require(activity, Access.ADMIN)) {
+            return;
+        }
+        if (url == null || !(url.startsWith("http://") || url.startsWith("https://"))) {
+            urlResult.setText("Enter a valid http(s) URL first.");
+            urlResult.setTextColor(Ui.WARN);
+            return;
+        }
+        if (!conn.ready()) {
+            urlResult.setText("Connect to the scooter first.");
+            urlResult.setTextColor(Ui.WARN);
+            return;
+        }
+        urlResult.setTextColor(Ui.DIM);
+        urlResult.setText("Dash is downloading + installing…");
+        conn.run(rpc -> rpc.installFromUrl(url, pkg, 300_000), (out, error) -> {
+            if (error != null) {
+                urlResult.setText("Failed: " + error.getMessage());
+                urlResult.setTextColor(Ui.BAD);
+                return;
+            }
+            boolean ok = out != null
+                    && out.toLowerCase(java.util.Locale.ROOT).contains("success");
+            urlResult.setText(out == null || out.trim().isEmpty()
+                    ? "(no output — is curl/wget on the dash, and is it online?)"
+                    : out.trim());
+            urlResult.setTextColor(ok ? Ui.ACCENT : Ui.WARN);
+        });
+    }
+
+    /** A weighted cell with a left gap, for the second button in a row. */
+    private LinearLayout.LayoutParams weightGap() {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        lp.leftMargin = Ui.dp(activity, 8);
+        return lp;
     }
 
     // ---------------------------------------------------------- provisioning

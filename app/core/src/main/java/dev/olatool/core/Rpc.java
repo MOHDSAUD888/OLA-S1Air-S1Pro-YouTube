@@ -525,6 +525,41 @@ public final class Rpc implements Closeable {
         }
     }
 
+    /**
+     * Tells the dash to fetch an APK from {@code url} over its own network and
+     * install it, so the phone never carries the bytes. The dash must be on a
+     * network with internet (e.g. the phone's hotspot) and have curl or wget.
+     *
+     * <p>TLS is verified on purpose: the file is installed as root, so a
+     * man-in-the-middle swap must not be possible. Returns the combined
+     * download + {@code pm install} log; grants overlay/write-settings when a
+     * package name is known and the install reports success.
+     */
+    public String installFromUrl(String url, String pkg, long timeoutMs) {
+        String safeUrl = "'" + url.replace("'", "") + "'";
+        String script = "#!/system/bin/sh\n"
+                + "URL=" + safeUrl + "\n"
+                + "OUT=/data/local/tmp/pegasus_url.apk\n"
+                + "rm -f \"$OUT\"\n"
+                + "if command -v curl >/dev/null 2>&1; then\n"
+                + "  curl -L -s -o \"$OUT\" \"$URL\"\n"
+                + "elif command -v wget >/dev/null 2>&1; then\n"
+                + "  wget -O \"$OUT\" \"$URL\" || toybox wget -O \"$OUT\" \"$URL\"\n"
+                + "else\n"
+                + "  echo NO_DOWNLOADER; exit 1\n"
+                + "fi\n"
+                + "if [ ! -s \"$OUT\" ]; then echo DOWNLOAD_FAILED; exit 1; fi\n"
+                + "echo \"downloaded $(wc -c < \"$OUT\") bytes\"\n"
+                + "pm install -r -g \"$OUT\"\n"
+                + "rm -f \"$OUT\"\n";
+        String out = runScript("pegasus-url-install.sh", script, timeoutMs);
+        if (pkg != null && !pkg.isEmpty() && out != null
+                && out.toLowerCase(java.util.Locale.ROOT).contains("success")) {
+            grantAppPermissions(pkg);
+        }
+        return out;
+    }
+
     // --------------------------------------------------------------- resolver
 
     private static void installResolver() {
