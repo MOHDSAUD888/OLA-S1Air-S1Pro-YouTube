@@ -33,6 +33,7 @@ import dev.olatool.core.Addr;
 public final class MainActivity extends Activity {
 
     private static final int REQ_LOCATION = 41;
+    private static final int REQ_PICK_APK = 73;
     private static final String PREFS = "ola";
     private static final String KEY_ADDRESS = "address";
     private static final String KEY_MODE = "conn_mode";
@@ -106,14 +107,15 @@ public final class MainActivity extends Activity {
                 new String[]{"Bluetooth", "Scan"},
                 new Tab[]{btTab, new ScanTab(this)});
         tabs[5] = new GroupTab(this,
-                new String[]{"ADB", "Dev", "TechPack", "Mode", "Passcode", "Unlock", "Mirror"},
+                new String[]{"ADB", "Dev", "TechPack", "Mode", "Passcode", "Unlock", "Mirror", "Project"},
                 new Tab[]{new AdbTab(this, conn),
                         new DevTab(this, conn, bus),
                         new TechPackTab(this, conn),
                         new ModeTab(this, conn),
                         new PasscodeTab(this, conn),
                         new UnlockTab(this, conn),
-                        new MirrorTab(this, conn)});
+                        new MirrorTab(this, conn),
+                        new ProjectionTab(this, conn)});
         tabs[6] = new SettingsTab(this, conn);
 
         host = new FrameLayout(this);
@@ -502,9 +504,45 @@ public final class MainActivity extends Activity {
         doConnect(typed);
     }
 
+    /** Delivers the Uri chosen by {@link #pickApk}. */
+    public interface ApkPicked {
+        void picked(android.net.Uri uri);
+    }
+
+    private ApkPicked pendingApkPick;
+
+    /**
+     * Opens the system file picker for an APK; the chosen Uri is handed to
+     * {@code cb}. One pick at a time — a new call replaces any pending one.
+     */
+    public void pickApk(ApkPicked cb) {
+        pendingApkPick = cb;
+        android.content.Intent intent =
+                new android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(android.content.Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        intent.putExtra(android.content.Intent.EXTRA_MIME_TYPES, new String[]{
+                "application/vnd.android.package-archive", "application/octet-stream"});
+        try {
+            startActivityForResult(
+                    android.content.Intent.createChooser(intent, "Select an APK"), REQ_PICK_APK);
+        } catch (Exception e) {
+            pendingApkPick = null;
+            report("No file picker available on this phone.", Ui.BAD);
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQ_PICK_APK) {
+            ApkPicked cb = pendingApkPick;
+            pendingApkPick = null;
+            if (cb != null && resultCode == RESULT_OK && data != null && data.getData() != null) {
+                cb.picked(data.getData());
+            }
+            return;
+        }
         if (btTab != null) {
             btTab.onActivityResult(requestCode, resultCode, data);
         }
@@ -565,13 +603,41 @@ public final class MainActivity extends Activity {
                     }
                 });
             } catch (Exception e) {
+                final String err = e.getMessage();
                 runOnUiThread(() -> {
                     connectButton.setEnabled(true);
-                    setConn("Not connected", Ui.BAD);
-                    setStatus(e.getMessage(), Ui.BAD);
+                    setStatus(err, Ui.BAD);
+                    probeBleAfterFailure(err);
                 });
             }
         }, "connect").start();
+    }
+
+    /**
+     * Wi-Fi connect failed: fall back to a passive BLE scan so the user knows
+     * whether the scooter is even in range. BLE can only locate it here — all
+     * control stays on the Wi-Fi/gRPC link.
+     */
+    private void probeBleAfterFailure(String wifiError) {
+        setConn("Checking BLE…", Ui.INFO);
+        new BleProbe(this).start((found, rssi, reason) -> {
+            if (found) {
+                setConn("Scooter near · BLE", Ui.WARN);
+                setStatus("Wi‑Fi link failed, but the scooter is "
+                        + BleProbe.proximity(rssi) + " over BLE (" + rssi + " dBm).\n"
+                        + "Wake the dash or join its Wi‑Fi / hotspot, then press Connect "
+                        + "again.\nBLE can locate the scooter but cannot control it.", Ui.WARN);
+            } else {
+                setConn("Not connected", Ui.BAD);
+                if (reason != null) {
+                    setStatus((wifiError == null ? "Could not connect." : wifiError)
+                            + "\nBLE check skipped: " + reason + ".", Ui.BAD);
+                } else {
+                    setStatus("Scooter not reachable on Wi‑Fi or BLE — it may be off, "
+                            + "asleep, or out of range. Wake the dash and try again.", Ui.BAD);
+                }
+            }
+        });
     }
 
     /**

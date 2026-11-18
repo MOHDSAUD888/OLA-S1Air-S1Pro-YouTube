@@ -54,6 +54,9 @@ public final class Ui {
     public static final int MAP_TRAIL_HALO = 0x99FFFFFF;
     public static final int MAP_PIN = 0xFF0B8F6B;
     public static final int MAP_PIN_EDGE = 0xFFFFFFFF;
+    // Pin interior. MapView draws the fill in brand green with a green edge;
+    // change this if you want a contrasting (e.g. white) pin centre.
+    public static final int MAP_PIN_FILL = MAP_PIN;
     public static final int MAP_INK = 0xFF111418;
     public static final int MAP_ARROW = 0xFF0B8F6B;
     public static final int MAP_ME_FILL = 0xFF1E88E5;

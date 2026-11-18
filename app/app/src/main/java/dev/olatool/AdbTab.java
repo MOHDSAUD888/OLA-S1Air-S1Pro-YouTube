@@ -57,6 +57,8 @@ public final class AdbTab implements Tab {
 
         body.addView(provisioning(), topMargin(0));
 
+        body.addView(installCard(), topMargin(10));
+
         body.addView(Ui.heading(activity, "Command"));
 
         input = new EditText(activity);
@@ -95,6 +97,132 @@ public final class AdbTab implements Tab {
                         + "push it as a .sh file and run that instead.");
         footer.setPadding(0, Ui.dp(activity, 10), 0, 0);
         body.addView(footer);
+    }
+
+    // ------------------------------------------------------------- apk install
+
+    private TextView installResult;
+
+    private View installCard() {
+        LinearLayout card = Ui.card(activity);
+        card.addView(Ui.heading(activity, "Install an app (.apk)"));
+        TextView note = Ui.note(activity,
+                "Pick any APK from this phone. It is staged on the scooter over the "
+                        + "root channel and installed with pm. Overlay and write-settings "
+                        + "app-ops are granted automatically for floating-nav style mods.");
+        note.setPadding(0, 0, 0, Ui.dp(activity, 8));
+        card.addView(note);
+
+        card.addView(Ui.accent(activity, "Pick & install APK", v -> pickAndInstall()));
+
+        installResult = Ui.text(activity, "", 11, Ui.DIM);
+        installResult.setTypeface(android.graphics.Typeface.MONOSPACE);
+        installResult.setTextIsSelectable(true);
+        installResult.setPadding(0, Ui.dp(activity, 8), 0, 0);
+        card.addView(installResult);
+        return card;
+    }
+
+    private void pickAndInstall() {
+        if (!Access.require(activity, Access.ADMIN)) {
+            return;
+        }
+        if (!conn.ready()) {
+            installResult.setText("Connect to the scooter first.");
+            installResult.setTextColor(Ui.WARN);
+            return;
+        }
+        activity.pickApk(this::installApk);
+    }
+
+    private void installApk(android.net.Uri uri) {
+        installResult.setTextColor(Ui.DIM);
+        installResult.setText("Reading file ...");
+
+        final java.io.File staged;
+        final byte[] bytes;
+        try {
+            staged = stage(uri);
+            bytes = readAll(new java.io.FileInputStream(staged));
+        } catch (Exception e) {
+            installResult.setText("Could not read the file: " + e.getMessage());
+            installResult.setTextColor(Ui.BAD);
+            return;
+        }
+        final String pkg = archivePackage(staged.getAbsolutePath());
+        final String remote = "/data/local/tmp/pegasus_install.apk";
+
+        conn.run(rpc -> {
+            rpc.pushFile(bytes, remote, f -> activity.runOnUiThread(() ->
+                    installResult.setText("Pushing APK ... " + Math.round(f * 100) + "%")));
+            activity.runOnUiThread(() -> installResult.setText("Installing with pm ..."));
+            String out = rpc.shell("pm install -r -g " + remote, 180_000);
+            rpc.exec("rm -f " + remote, 15_000);
+            if (pkg != null) {
+                rpc.grantAppPermissions(pkg);
+            }
+            return out;
+        }, (out, error) -> {
+            staged.delete();
+            if (error != null) {
+                installResult.setText("Install failed: " + error.getMessage());
+                installResult.setTextColor(Ui.BAD);
+                return;
+            }
+            boolean ok = out != null
+                    && out.toLowerCase(java.util.Locale.ROOT).contains("success");
+            StringBuilder sb = new StringBuilder();
+            sb.append(ok ? "Installed successfully."
+                    : "pm: " + (out == null ? "(no output)" : out.trim()));
+            if (pkg != null) {
+                sb.append("\nPackage: ").append(pkg);
+                if (ok) {
+                    sb.append("\nGranted: overlay + write-settings.");
+                }
+            }
+            installResult.setText(sb.toString());
+            installResult.setTextColor(ok ? Ui.ACCENT : Ui.WARN);
+        });
+    }
+
+    /** Copies the picked Uri into the app cache so pm and PackageManager can read it. */
+    private java.io.File stage(android.net.Uri uri) throws Exception {
+        java.io.File out = new java.io.File(activity.getCacheDir(), "pegasus_pick.apk");
+        try (java.io.InputStream in = activity.getContentResolver().openInputStream(uri);
+             java.io.OutputStream os = new java.io.FileOutputStream(out)) {
+            if (in == null) {
+                throw new java.io.IOException("cannot open the selected file");
+            }
+            byte[] buf = new byte[1 << 16];
+            int n;
+            while ((n = in.read(buf)) > 0) {
+                os.write(buf, 0, n);
+            }
+        }
+        return out;
+    }
+
+    private byte[] readAll(java.io.InputStream in) throws Exception {
+        try (java.io.InputStream src = in) {
+            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+            byte[] buf = new byte[1 << 16];
+            int n;
+            while ((n = src.read(buf)) > 0) {
+                out.write(buf, 0, n);
+            }
+            return out.toByteArray();
+        }
+    }
+
+    /** Reads the package name straight from the APK, for the permission grants. */
+    private String archivePackage(String path) {
+        try {
+            android.content.pm.PackageInfo pi =
+                    activity.getPackageManager().getPackageArchiveInfo(path, 0);
+            return pi == null ? null : pi.packageName;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // ---------------------------------------------------------- provisioning
@@ -261,11 +389,15 @@ public final class AdbTab implements Tab {
         if (!Access.require(activity, Access.ADMIN)) {
             return;
         }
-        String command = input.getText().toString().trim();
-        if (command.isEmpty()) {
+        String raw = input.getText().toString().trim();
+        if (raw.isEmpty()) {
             output.setText("Nothing to run.");
             return;
         }
+        // The daemon splits the whole command on every run of whitespace, so a
+        // raw newline would break sh -c and silently run only the first line.
+        // Join lines into one ';'-separated command instead.
+        String command = raw.replaceAll("[\\r\\n]+", " ; ");
         if (!conn.ready()) {
             output.setText("Connect to the scooter first.");
             return;

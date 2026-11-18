@@ -108,10 +108,18 @@ public final class Msg {
             int field = r.tag();
             switch (field) {
                 case 1:
-                    status = (int) r.varint();
+                    if (r.wire() == Proto.WIRE_VARINT) {
+                        status = (int) r.varint();
+                    } else {
+                        r.skip(r.wire());
+                    }
                     break;
                 case 2:
-                    message = r.string();
+                    if (r.wire() == Proto.WIRE_LENGTH) {
+                        message = r.string();
+                    } else {
+                        r.skip(r.wire());
+                    }
                     break;
                 default:
                     r.skip(r.wire());
@@ -163,10 +171,18 @@ public final class Msg {
             int field = r.tag();
             switch (field) {
                 case 1:
-                    status = (int) r.varint();
+                    if (r.wire() == Proto.WIRE_VARINT) {
+                        status = (int) r.varint();
+                    } else {
+                        r.skip(r.wire());
+                    }
                     break;
                 case 2:
-                    message = r.string();
+                    if (r.wire() == Proto.WIRE_LENGTH) {
+                        message = r.string();
+                    } else {
+                        r.skip(r.wire());
+                    }
                     break;
                 default:
                     r.skip(r.wire());
@@ -236,16 +252,32 @@ public final class Msg {
             int field = r.tag();
             switch (field) {
                 case 1:
-                    mode = (int) r.varint();
+                    if (r.wire() == Proto.WIRE_VARINT) {
+                        mode = (int) r.varint();
+                    } else {
+                        r.skip(r.wire());
+                    }
                     break;
                 case 2:
-                    ts = r.varint();
+                    if (r.wire() == Proto.WIRE_VARINT) {
+                        ts = r.varint();
+                    } else {
+                        r.skip(r.wire());
+                    }
                     break;
                 case 3:
-                    tsStr = r.string();
+                    if (r.wire() == Proto.WIRE_LENGTH) {
+                        tsStr = r.string();
+                    } else {
+                        r.skip(r.wire());
+                    }
                     break;
                 case 4:
-                    by = r.string();
+                    if (r.wire() == Proto.WIRE_LENGTH) {
+                        by = r.string();
+                    } else {
+                        r.skip(r.wire());
+                    }
                     break;
                 default:
                     r.skip(r.wire());

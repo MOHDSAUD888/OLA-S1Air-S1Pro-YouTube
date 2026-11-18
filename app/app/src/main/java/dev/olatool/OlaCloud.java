@@ -345,8 +345,12 @@ public final class OlaCloud {
             BufferedReader r = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
             StringBuilder sb = new StringBuilder();
             String line;
+            final int cap = 1 << 20;   // 1 MB — far more than any status payload.
             while ((line = r.readLine()) != null) {
                 sb.append(line);
+                if (sb.length() > cap) {
+                    break;
+                }
             }
             r.close();
             return sb.toString();

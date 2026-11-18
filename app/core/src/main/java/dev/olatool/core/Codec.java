@@ -32,9 +32,19 @@ public final class Codec {
         }
         byte[] out = new byte[text.length() / 2];
         for (int i = 0; i < out.length; i++) {
-            out[i] = (byte) Integer.parseInt(text.substring(i * 2, i * 2 + 2), 16);
+            int hi = hexDigit(text.charAt(i * 2));
+            int lo = hexDigit(text.charAt(i * 2 + 1));
+            out[i] = (byte) ((hi << 4) | lo);
         }
         return out;
+    }
+
+    private static int hexDigit(char c) {
+        int d = Character.digit(c, 16);
+        if (d < 0) {
+            throw new IllegalArgumentException("not hex: '" + c + "'");
+        }
+        return d;
     }
 
     /** Standard base64 with padding, i.e. what {@code base64 -d} expects. */

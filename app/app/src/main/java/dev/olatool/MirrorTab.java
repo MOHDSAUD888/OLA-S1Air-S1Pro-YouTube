@@ -148,6 +148,14 @@ public final class MirrorTab implements Tab {
         lockRow.addView(Ui.button(activity, "🔓 Unlock 7-tap", v -> ytLock(false)), weight());
         body.addView(lockRow, topMargin(8));
 
+        // Floating nav (S1 Nav ball): Lock hides the on-dash floating button,
+        // Unlock brings it back — same idea as the 7-tap lock above.
+        LinearLayout navRow = Ui.row(activity);
+        navRow.addView(Ui.button(activity, "🔒 Lock nav", v -> navLock(true)), weight());
+        navRow.addView(Ui.space(activity, 0), fixed(8));
+        navRow.addView(Ui.button(activity, "🔓 Unlock nav", v -> navLock(false)), weight());
+        body.addView(navRow, topMargin(8));
+
         body.addView(centerRow(Ui.button(activity, "▲", v -> key(KEY_UP))), topMargin(8));
         LinearLayout mid = Ui.row(activity);
         mid.addView(Ui.button(activity, "◀", v -> key(KEY_LEFT)), weight());
@@ -239,6 +247,14 @@ public final class MirrorTab implements Tab {
         String feature = lock ? "lock" : "unlock";
         remote("am start -n " + YT_SETUP + " -e feature " + feature,
                 lock ? "7-tap locked." : "7-tap unlocked.");
+    }
+
+    /** Hide (lock) or show (unlock) the S1 Nav floating button on the dash by
+     *  firing its own SET_SCOOTER_LOCKED broadcast. */
+    private void navLock(boolean lock) {
+        remote("am broadcast -a com.saud.ball.action.SET_SCOOTER_LOCKED"
+                        + " -n com.saud.ball/.core.QuickBallCommandReceiver --ez locked " + lock,
+                lock ? "Floating nav hidden." : "Floating nav shown.");
     }
 
     private void ytForceStop() {
@@ -388,9 +404,13 @@ public final class MirrorTab implements Tab {
         MediaCodec decoder = null;
         try {
             Socket s = new Socket();
-            // The agent may need a beat to bind; retry a few times.
+            // The agent may need a beat to bind; retry a few times. Keep the
+            // %scope on a link-local host (fe80::…%wlan0): without it the kernel
+            // has no interface to route on and connect() fails ENETUNREACH, so
+            // the mirror never starts on a BSSID/ARP-derived link-local link.
+            // InetAddress.getByName accepts the named scope and resolves it.
             InetSocketAddress dest = new InetSocketAddress(
-                    InetAddress.getByName(stripScope(target.host)), PORT);
+                    InetAddress.getByName(target.host), PORT);
             Exception last = null;
             for (int attempt = 0; attempt < 10 && running; attempt++) {
                 try {
@@ -749,11 +769,6 @@ public final class MirrorTab implements Tab {
             }
             return bos.toByteArray();
         }
-    }
-
-    private static String stripScope(String host) {
-        int pct = host.indexOf('%');
-        return pct < 0 ? host : host.substring(0, pct);
     }
 
     private LinearLayout.LayoutParams weight() {

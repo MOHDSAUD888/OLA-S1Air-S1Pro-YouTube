@@ -78,6 +78,10 @@ final class VehicleTab implements Tab, Bus.Listener, CloudState.Listener {
     /** Cached so render() never touches Conn; refreshed on show and each tick. */
     private boolean connected;
 
+    /** Controls card: result line and live RAM readout. */
+    private TextView controlResult;
+    private TextView ramValue;
+
     VehicleTab(Activity activity, Conn conn, Bus bus) {
         this.activity = activity;
         this.conn = conn;
@@ -179,6 +183,52 @@ final class VehicleTab implements Tab, Bus.Listener, CloudState.Listener {
         hero.addView(miniRow);
 
         body.addView(hero, margin());
+
+        // 2b. Controls: lock / unlock / open boot over the vehicle CAN
+        // (CommandFromAPP, id 0x6A1), a jump back to the dash, and a live RAM
+        // read. Same command path the S1Mods app uses.
+        Ui.Section controls = Ui.section(activity, "Controls",
+                "Lock, unlock and boot over the vehicle CAN");
+
+        LinearLayout lockRow = Ui.row(activity);
+        lockRow.addView(Ui.accent(activity, "Unlock",
+                v -> sendCommand(Rpc.CMD_UNLOCK, "Unlock")), rowWeight());
+        LinearLayout.LayoutParams lockGap = rowWeight();
+        lockGap.leftMargin = dp(8);
+        lockRow.addView(Ui.danger(activity, "Lock",
+                v -> sendCommand(Rpc.CMD_LOCK, "Lock")), lockGap);
+        controls.body.addView(lockRow);
+
+        LinearLayout dashRow = Ui.row(activity);
+        dashRow.addView(Ui.button(activity, "Open Boot",
+                v -> sendCommand(Rpc.CMD_OPEN_BOOT, "Open Boot")), rowWeight());
+        LinearLayout.LayoutParams dashGap = rowWeight();
+        dashGap.leftMargin = dp(8);
+        dashRow.addView(Ui.button(activity, "Dashboard Home", v -> goHome()), dashGap);
+        LinearLayout.LayoutParams dashLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        dashLp.topMargin = dp(8);
+        controls.body.addView(dashRow, dashLp);
+
+        controlResult = Ui.text(activity, "", 12, Ui.DIM);
+        controlResult.setPadding(0, dp(8), 0, 0);
+        controls.body.addView(controlResult);
+
+        LinearLayout ramRow = Ui.row(activity);
+        ramRow.setGravity(Gravity.CENTER_VERTICAL);
+        ramValue = Ui.text(activity, "RAM  —", 12, Ui.TEXT);
+        ramValue.setTypeface(Typeface.MONOSPACE);
+        ramRow.addView(ramValue, new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        ramRow.addView(Ui.button(activity, "RAM", v -> refreshRam()));
+        LinearLayout.LayoutParams ramLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        ramLp.topMargin = dp(8);
+        controls.body.addView(ramRow, ramLp);
+
+        body.addView(controls.card, margin());
 
         // 3. Vehicle details, read once from the profile database.
         Ui.Section details = Ui.section(activity, "Vehicle details",
@@ -444,6 +494,71 @@ final class VehicleTab implements Tab, Bus.Listener, CloudState.Listener {
         String model = info == null ? null : info.model;
         Ui.set(heroModel, model == null || model.trim().isEmpty()
                 ? "Ola S1" : model.trim());
+    }
+
+    // ----------------------------------------------------------- controls
+
+    private LinearLayout.LayoutParams rowWeight() {
+        return new LinearLayout.LayoutParams(0,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+    }
+
+    /** Fires one CommandFromAPP CAN frame (lock / unlock / open boot). */
+    private void sendCommand(int command, String label) {
+        if (conn == null || !conn.ready()) {
+            Ui.set(controlResult, "Connect to the scooter first.");
+            controlResult.setTextColor(Ui.WARN);
+            return;
+        }
+        Ui.set(controlResult, "Sending " + label + " …");
+        controlResult.setTextColor(Ui.DIM);
+        conn.run(rpc -> rpc.commandFromApp(command, 5_000), (ok, err) -> {
+            if (err != null) {
+                Ui.set(controlResult, label + " failed: " + err.getMessage());
+                controlResult.setTextColor(Ui.BAD);
+            } else {
+                Ui.set(controlResult, label + " command sent.");
+                controlResult.setTextColor(Ui.ACCENT);
+            }
+        });
+    }
+
+    private void goHome() {
+        if (conn == null || !conn.ready()) {
+            Ui.set(controlResult, "Connect to the scooter first.");
+            controlResult.setTextColor(Ui.WARN);
+            return;
+        }
+        Ui.set(controlResult, "Bringing dashboard home …");
+        controlResult.setTextColor(Ui.DIM);
+        conn.run(rpc -> {
+            rpc.dashboardHome(15_000);
+            return Boolean.TRUE;
+        }, (ok, err) -> {
+            if (err != null) {
+                Ui.set(controlResult, "Dashboard home failed: " + err.getMessage());
+                controlResult.setTextColor(Ui.BAD);
+            } else {
+                Ui.set(controlResult, "Dashboard home active.");
+                controlResult.setTextColor(Ui.ACCENT);
+            }
+        });
+    }
+
+    private void refreshRam() {
+        if (conn == null || !conn.ready()) {
+            Ui.set(ramValue, "RAM  connect first");
+            return;
+        }
+        Ui.set(ramValue, "RAM  reading…");
+        conn.run(Rpc::ramInfo, (ram, err) -> {
+            if (err != null || ram == null) {
+                Ui.set(ramValue, "RAM  unavailable");
+            } else {
+                Ui.set(ramValue, "RAM  " + ram.usedMb + " / " + ram.totalMb
+                        + " MB used · " + ram.freeMb + " free");
+            }
+        });
     }
 
     private Mini mini(String label) {

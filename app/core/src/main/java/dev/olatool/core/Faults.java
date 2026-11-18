@@ -56,6 +56,14 @@ public final class Faults {
 
     private final Map<String, Fault> byId = new LinkedHashMap<>();
 
+    /**
+     * Memoised signal-name to fault lookups. {@link #NO_MATCH} marks a miss, so
+     * the {@link #camelCase} work runs once per signal name rather than on every
+     * snapshot (the live screen asks per signal, ten times a second).
+     */
+    private final Map<String, Fault> signalCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Fault NO_MATCH = new Fault("", "", "", INFO, "OTHER", false, null);
+
     private Faults() {
     }
 
@@ -111,11 +119,16 @@ public final class Faults {
         if (signalName == null || signalName.isEmpty()) {
             return null;
         }
-        Fault exact = byId.get(signalName);
-        if (exact != null) {
-            return exact;
+        Fault cached = signalCache.get(signalName);
+        if (cached != null) {
+            return cached == NO_MATCH ? null : cached;
         }
-        return byId.get(camelCase(signalName));
+        Fault found = byId.get(signalName);
+        if (found == null) {
+            found = byId.get(camelCase(signalName));
+        }
+        signalCache.put(signalName, found == null ? NO_MATCH : found);
+        return found;
     }
 
     /** {@code BMS_Precharge_Fail} becomes {@code bmsPrechargeFail}. */

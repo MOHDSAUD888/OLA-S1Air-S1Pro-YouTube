@@ -144,7 +144,10 @@ public final class Proto {
 
         public byte[] bytes() {
             int len = (int) varint();
-            if (len < 0 || pos + len > buf.length) {
+            // Compare as buf.length - pos (pos <= buf.length, so no overflow);
+            // pos + len would overflow to a negative on a huge length and slip
+            // past the check, then blow up as a multi-GB allocation.
+            if (len < 0 || len > buf.length - pos) {
                 throw new IllegalArgumentException("truncated field");
             }
             byte[] out = new byte[len];
@@ -165,9 +168,14 @@ public final class Proto {
                 case WIRE_64BIT:
                     pos += 8;
                     break;
-                case WIRE_LENGTH:
-                    pos += (int) varint();
+                case WIRE_LENGTH: {
+                    int len = (int) varint();
+                    if (len < 0 || len > buf.length - pos) {
+                        throw new IllegalArgumentException("truncated message");
+                    }
+                    pos += len;
                     break;
+                }
                 case WIRE_32BIT:
                     pos += 4;
                     break;

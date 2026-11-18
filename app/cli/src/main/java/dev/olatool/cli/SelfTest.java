@@ -18,6 +18,7 @@ import dev.olatool.core.Json;
 import dev.olatool.core.Live;
 import dev.olatool.core.Msg;
 import dev.olatool.core.PanelData;
+import dev.olatool.core.Proto;
 import dev.olatool.core.Provision;
 import dev.olatool.core.VehicleInfo;
 
@@ -39,6 +40,7 @@ public final class SelfTest {
     public static void main(String[] args) throws Exception {
         json();
         codec();
+        proto();
         canFrames();
         dbc();
         faults();
@@ -72,6 +74,47 @@ public final class SelfTest {
                 new String(Codec.unbase64("aGVsbG8="), StandardCharsets.UTF_8));
         eq("base64 no padding", "hello",
                 new String(Codec.unbase64("aGVsbG8"), StandardCharsets.UTF_8));
+    }
+
+    private static void proto() {
+        // Round-trip: field 1 = string, field 2 = varint.
+        byte[] enc = new Proto.Writer().string(1, "hi").uint(2, 300).toByteArray();
+        Proto.Reader r = new Proto.Reader(enc);
+        String s = "";
+        long n = 0;
+        while (r.hasMore()) {
+            int f = r.tag();
+            if (f == 1) {
+                s = r.string();
+            } else if (f == 2) {
+                n = r.varint();
+            } else {
+                r.skip(r.wire());
+            }
+        }
+        eq("proto string field", "hi", s);
+        eq("proto varint field", 300L, n);
+
+        // A length-delimited field claiming ~2^31 bytes must throw cleanly, not
+        // overflow the bounds check into a multi-GB allocation. Bytes: tag for
+        // field 1 wire 2 (0x0A), then a 5-byte varint = 0x7FFFFFFF.
+        byte[] huge = {0x0A, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, 0x07};
+        throwsIae("proto overflow length", () -> {
+            Proto.Reader rr = new Proto.Reader(huge);
+            rr.tag();
+            rr.bytes();
+        });
+
+        // Truncated varint: high bit set with no continuation byte.
+        throwsIae("proto truncated varint",
+                () -> new Proto.Reader(new byte[]{(byte) 0x80}).varint());
+
+        // Length field says 10 bytes but only 2 follow.
+        throwsIae("proto truncated field", () -> {
+            Proto.Reader rr = new Proto.Reader(new byte[]{0x0A, 0x0A, 0x01, 0x02});
+            rr.tag();
+            rr.bytes();
+        });
     }
 
     private static void canFrames() {
@@ -301,6 +344,19 @@ public final class SelfTest {
     }
 
     // ---------------------------------------------------------------- helpers
+
+    private static void throwsIae(String name, Runnable body) {
+        try {
+            body.run();
+            failed++;
+            System.out.println("FAIL  " + name + ": expected IllegalArgumentException, none thrown");
+        } catch (IllegalArgumentException e) {
+            passed++;
+        } catch (Throwable t) {
+            failed++;
+            System.out.println("FAIL  " + name + ": expected IllegalArgumentException, got " + t);
+        }
+    }
 
     private static void eq(String name, Object expected, Object actual) {
         boolean ok = expected == null ? actual == null : expected.equals(actual);

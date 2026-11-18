@@ -361,6 +361,97 @@ public final class Rpc implements Closeable {
                 Msg.configType(type), 30_000));
     }
 
+    // ------------------------------------------------- body commands (CAN 0x6A1)
+
+    /** {@code CommandFromAPP} (CAN id 0x6A1); one byte picks the action. */
+    public static final int CMD_UNLOCK = 0x01;
+    public static final int CMD_LOCK = 0x02;
+    public static final int CMD_OPEN_BOOT = 0x05;
+
+    /**
+     * Sends a one-byte {@code CommandFromAPP} frame on the vehicle CAN
+     * (id 0x6A1 / 1697) through the daemon's {@code cansend}, exactly as the
+     * S1Mods app does. {@code 0x01} unlock, {@code 0x02} lock, {@code 0x05}
+     * open boot.
+     *
+     * <p>A lock can stop the bus before the reply returns, so a
+     * {@code DEADLINE_EXCEEDED} is read as "frame went out" rather than a
+     * failure. The signal is {@code Command_From_APP} in can_database.json.
+     */
+    public boolean commandFromApp(int commandByte, long timeoutMs) {
+        String frame = String.format(
+                "cansend vcan0 6A1#%02X00000000000000", commandByte & 0xFF);
+        try {
+            shell(frame, timeoutMs);
+            return true;
+        } catch (RpcException e) {
+            if (e.getCause() instanceof StatusRuntimeException
+                    && ((StatusRuntimeException) e.getCause()).getStatus().getCode()
+                            == Status.Code.DEADLINE_EXCEEDED) {
+                return true;
+            }
+            throw e;
+        }
+    }
+
+    /** Brings the MoveOS speedometer dashboard back to the front. */
+    public void dashboardHome(long timeoutMs) {
+        exec("am start -n com.olaelectric.hmiclient/.MainActivity", timeoutMs);
+        exec("input keyevent 3", 10_000);
+    }
+
+    /** Live head-unit memory, parsed from {@code /proc/meminfo}. Null if unreadable. */
+    public Ram ramInfo() {
+        String out = shell("cat /proc/meminfo", 8_000);
+        if (out == null || out.trim().isEmpty()) {
+            return null;
+        }
+        long totalKb = 0, availKb = 0, freeKb = 0, buffersKb = 0, cachedKb = 0;
+        boolean hasAvail = false;
+        for (String line : out.split("\\n")) {
+            int colon = line.indexOf(':');
+            if (colon < 0) {
+                continue;
+            }
+            String key = line.substring(0, colon).trim();
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)")
+                    .matcher(line.substring(colon + 1));
+            if (!m.find()) {
+                continue;
+            }
+            long kb = Long.parseLong(m.group(1));
+            switch (key) {
+                case "MemTotal": totalKb = kb; break;
+                case "MemAvailable": availKb = kb; hasAvail = true; break;
+                case "MemFree": freeKb = kb; break;
+                case "Buffers": buffersKb = kb; break;
+                case "Cached": cachedKb = kb; break;
+                default: break;
+            }
+        }
+        if (totalKb <= 0) {
+            return null;
+        }
+        long freeTotalKb = hasAvail ? availKb : freeKb + buffersKb + cachedKb;
+        int totalMb = (int) (totalKb / 1024);
+        int freeMb = (int) (freeTotalKb / 1024);
+        int usedMb = Math.max(0, totalMb - freeMb);
+        return new Ram(totalMb, usedMb, freeMb);
+    }
+
+    /** Head-unit memory snapshot in MB. */
+    public static final class Ram {
+        public final int totalMb;
+        public final int usedMb;
+        public final int freeMb;
+
+        public Ram(int totalMb, int usedMb, int freeMb) {
+            this.totalMb = totalMb;
+            this.usedMb = usedMb;
+            this.freeMb = freeMb;
+        }
+    }
+
     // ---------------------------------------------------------------- scripts
 
     /**
@@ -383,6 +474,55 @@ public final class Rpc implements Closeable {
         }
         exec("chmod 755 " + remote, 15_000);
         return shell("sh " + remote, timeoutMs);
+    }
+
+    /** Progress callback for a chunked push; {@code fraction} runs 0..1. */
+    public interface Progress {
+        void at(float fraction);
+    }
+
+    /**
+     * Pushes raw bytes to a remote path with the same base64-over-shell chunking
+     * as {@link #runScript}, but without running the result. Used to stage a
+     * binary such as an APK in /data/local/tmp before {@code pm install}.
+     */
+    public void pushFile(byte[] data, String remotePath, Progress progress) {
+        String encoded = Codec.base64(data);
+        int chunk = 60_000;
+        int total = Math.max(1, (encoded.length() + chunk - 1) / chunk);
+        int done = 0;
+        for (int start = 0; start < encoded.length(); start += chunk) {
+            String part = encoded.substring(start, Math.min(encoded.length(), start + chunk));
+            String redirect = start == 0 ? ">" : ">>";
+            String cmd = "sh -c echo${IFS}" + part + "|base64${IFS}-d" + redirect + remotePath;
+            Msg.Response r = exec(cmd, 60_000);
+            if (!r.ok()) {
+                throw new RpcException("could not write " + remotePath + ": " + r.message);
+            }
+            done++;
+            if (progress != null) {
+                progress.at((float) done / total);
+            }
+        }
+        if (progress != null) {
+            progress.at(1f);
+        }
+    }
+
+    /**
+     * Grants the two app-ops a floating-overlay style mod needs: draw-over
+     * ({@code SYSTEM_ALERT_WINDOW}) and {@code WRITE_SETTINGS}. Both are app-ops,
+     * not runtime permissions, so {@code pm grant} cannot set them. Best effort:
+     * an app that does not declare an op is left as-is.
+     */
+    public void grantAppPermissions(String pkg) {
+        for (String op : new String[]{"SYSTEM_ALERT_WINDOW", "WRITE_SETTINGS"}) {
+            try {
+                exec("appops set " + pkg + " " + op + " allow", 15_000);
+            } catch (RpcException ignored) {
+                // Not every app declares every op; keep going.
+            }
+        }
     }
 
     // --------------------------------------------------------------- resolver
