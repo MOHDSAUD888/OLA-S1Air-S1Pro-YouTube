@@ -45,6 +45,17 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
+      - name: Restore debug keystore (stable signing for self-update)
+        env:
+          KS: ${{ secrets.DEBUG_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KS" ]; then
+            echo "$KS" | base64 -d > app/debug.keystore
+            echo "debug keystore restored for stable signing"
+          else
+            echo "DEBUG_KEYSTORE_B64 not set; using AGP's default debug key"
+          fi
+
       - name: Core self-test (fails the build if parsing/crypto breaks)
         run: ./gradlew :cli:run --args="selftest" --console=plain
 

@@ -34,6 +34,22 @@ android {
     }
 
     signingConfigs {
+        // A committed debug keystore (the ordinary Android debug key, not a
+        // secret) so every build — local and CI — is signed with the SAME key.
+        // Without it each CI runner invents its own debug key and the in-app
+        // self-update fails with a signature mismatch.
+        getByName("debug") {
+            // Use the committed/decoded keystore when present so local and CI
+            // builds share one signature; otherwise fall back to AGP's default
+            // debug key, so a checkout without the keystore still builds.
+            val debugKeystore = file("debug.keystore")
+            if (debugKeystore.exists()) {
+                storeFile = debugKeystore
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
         if (hasKeystore) {
             create("release") {
                 storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
