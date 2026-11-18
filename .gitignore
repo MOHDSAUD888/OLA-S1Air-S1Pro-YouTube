@@ -81,3 +81,4 @@ scooter-launcher/
 *.dex
 *.b64
 *.smali
+dist/
