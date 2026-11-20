@@ -75,6 +75,9 @@ public final class ScanTab implements Tab {
         }
     }
 
+    private boolean onlyScooters;
+    private Button onlyBtn;
+
     private void build() {
         LinearLayout body = Ui.body(root);
 
@@ -86,6 +89,17 @@ public final class ScanTab implements Tab {
         LinearLayout buttons = Ui.row(ctx);
         scanButton = Ui.accent(ctx, "Scan network", v -> onScan());
         buttons.addView(scanButton);
+        onlyBtn = Ui.button(ctx, "🛵 Only scooters", v -> {
+            onlyScooters = !onlyScooters;
+            onlyBtn.setText(onlyScooters ? "🛵 Scooters ✓" : "🛵 Only scooters");
+            if (!scanning) {
+                onScan();
+            }
+        });
+        LinearLayout.LayoutParams og = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        og.leftMargin = Ui.dp(ctx, 8);
+        buttons.addView(onlyBtn, og);
         head.body.addView(buttons);
         statusLine = Ui.note(ctx, "Scans the /24 you are on. Join the scooter's Wi-Fi to find it.");
         statusLine.setPadding(0, Ui.dp(ctx, 10), 0, 0);
@@ -178,6 +192,9 @@ public final class ScanTab implements Tab {
     }
 
     private void addDevice(String ip, String mac, List<Integer> open, boolean self, boolean gateway) {
+        if (onlyScooters && !open.contains(50005)) {
+            return;   // scooter filter: only the root-daemon hosts
+        }
         String type = classify(open, self, gateway);
         String emoji = emojiFor(type);
         int color = colorFor(type);

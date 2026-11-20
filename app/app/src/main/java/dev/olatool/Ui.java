@@ -20,13 +20,13 @@ public final class Ui {
 
     // Premium dark palette (Tokyo-Night family): layered surfaces, one calm
     // accent, brighter body text. BG < CARD < ELEV gives real depth.
-    public static final int BG = 0xFF15161E;
-    public static final int CARD = 0xFF1A1B26;
-    public static final int ELEV = 0xFF2A2D44;
-    public static final int CODE_BG = 0xFF101019;
-    public static final int LINE = 0xFF3C4268;
-    public static final int TEXT = 0xFFC8D2F0;
-    public static final int DIM = 0xFFAAB2D8;
+    public static final int BG = 0xFF0A0A0E;
+    public static final int CARD = 0xFF14151B;
+    public static final int ELEV = 0xFF1C1D25;
+    public static final int CODE_BG = 0xFF0E0E13;
+    public static final int LINE = 0xFF272832;
+    public static final int TEXT = 0xFFECEEF3;
+    public static final int DIM = 0xFF8A8F9C;
     public static final int ACCENT = 0xFF7AA2F7;
     public static final int INFO = 0xFF7DCFFF;
     public static final int WARN = 0xFFE0AF68;
@@ -80,8 +80,8 @@ public final class Ui {
     public static final int PLAYER_CAP = 0x22FFFFFF;
 
     /** Corner radii, in dp. Two sizes only, so every surface matches. */
-    public static final int RADIUS_CARD = 16;
-    public static final int RADIUS_CONTROL = 12;
+    public static final int RADIUS_CARD = 20;
+    public static final int RADIUS_CONTROL = 14;
 
     /** Shown where the vehicle has not reported a value yet. */
     public static final String DASH = "\u2014";
@@ -322,7 +322,7 @@ public final class Ui {
 
     public static LinearLayout card(Context c) {
         LinearLayout l = column(c);
-        l.setPadding(dp(c, 16), dp(c, 14), dp(c, 16), dp(c, 14));
+        l.setPadding(dp(c, 18), dp(c, 16), dp(c, 18), dp(c, 16));
         // ELEV: one step lighter than a section, so nested cards have depth.
         l.setBackground(round(c, ELEV, RADIUS_CARD, LINE));
         return l;

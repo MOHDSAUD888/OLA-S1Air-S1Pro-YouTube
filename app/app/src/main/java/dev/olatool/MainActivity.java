@@ -37,18 +37,28 @@ public final class MainActivity extends Activity {
     private static final String PREFS = "ola";
     private static final String KEY_ADDRESS = "address";
     private static final String KEY_MODE = "conn_mode";
+    private static final String KEY_AUTOCONNECT = "autoconnect";
     private static final String MODE_AUTO = "auto";
     private static final String MODE_DIRECT = "direct";
     // Top-level groups. Each hosts several related screens behind a segmented
     // control (see GroupTab), so the main bar is short instead of listing all
     // sixteen screens at once.
     private static final String[] TAB_NAMES = {
-            "BMS", "Vehicle", "Diagnostics", "Cloud", "Bluetooth", "Tools", "Settings"
+            "Home", "BMS", "Vehicle", "Diagnostics", "Cloud", "Bluetooth", "Tools", "Settings"
+    };
+    // Bottom-nav icon (emoji) + short label per main tab, same order as TAB_NAMES.
+    private static final String[] TAB_ICONS = {
+            "🏠", "🔋", "🛵", "🩺", "☁", "📶", "🛠", "⚙"
+    };
+    private static final String[] TAB_SHORT = {
+            "Home", "BMS", "Vehicle", "Diag", "Cloud", "BT", "Tools", "Settings"
     };
 
     private final Conn conn = new Conn();
     private final Tab[] tabs = new Tab[TAB_NAMES.length];
-    private final Button[] tabButtons = new Button[TAB_NAMES.length];
+    private final LinearLayout[] navItems = new LinearLayout[TAB_NAMES.length];
+    private final TextView[] navIcons = new TextView[TAB_NAMES.length];
+    private final TextView[] navLabels = new TextView[TAB_NAMES.length];
     private BtTab btTab;
 
     private Bus bus;
@@ -57,6 +67,11 @@ public final class MainActivity extends Activity {
     private Button disconnectButton;
     private TextView status;
     private FrameLayout content;
+    private boolean autoConnect;
+    private Button autoChip;
+    private final android.os.Handler autoHandler =
+            new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable autoPoll = this::autoTick;
     private FrameLayout host;
     private View lockOverlay;
     private HorizontalScrollView barScroll;
@@ -82,32 +97,33 @@ public final class MainActivity extends Activity {
 
         // Build the child screens once, then group related ones under one bar
         // entry each. Screens themselves are unchanged.
-        tabs[0] = new GroupTab(this,
+        tabs[0] = new HomeTab(this, conn, bus);
+        tabs[1] = new GroupTab(this,
                 new String[]{"Dashboard", "Cells", "Control", "Alerts"},
                 new Tab[]{new BmsDashboardTab(this, conn, bus),
                         new BmsCellsTab(this, bus),
                         new BmsControlTab(this, conn, bus),
                         new FaultsTab(this, conn, bus)});
-        tabs[1] = new GroupTab(this,
+        tabs[2] = new GroupTab(this,
                 new String[]{"Vehicle", "Battery", "Signals"},
                 new Tab[]{new VehicleTab(this, conn, bus),
                         new BatteryTab(this, conn, bus),
                         new SignalsTab(this, conn, bus)});
-        tabs[2] = new GroupTab(this,
+        tabs[3] = new GroupTab(this,
                 new String[]{"Diagnostics", "Faults", "Log"},
                 new Tab[]{new DiagnosticsTab(this, conn, bus),
                         new FaultsTab(this, conn, bus),
                         new LogTab(this, conn, bus)});
-        tabs[3] = new GroupTab(this,
+        tabs[4] = new GroupTab(this,
                 new String[]{"Cloud", "Fleet", "Track"},
                 new Tab[]{new CloudTab(this, conn),
                         new FleetTab(this, conn),
                         new TrackTab(this, conn)});
-        tabs[4] = new GroupTab(this,
+        tabs[5] = new GroupTab(this,
                 new String[]{"Bluetooth", "Scan"},
                 new Tab[]{btTab, new ScanTab(this)});
-        tabs[5] = new GroupTab(this,
-                new String[]{"ADB", "Dev", "TechPack", "Mode", "Passcode", "Unlock", "Mirror", "Project", "Update"},
+        tabs[6] = new GroupTab(this,
+                new String[]{"ADB", "Dev", "TechPack", "Mode", "Passcode", "Unlock", "Mirror", "Project", "Apps", "Update"},
                 new Tab[]{new AdbTab(this, conn),
                         new DevTab(this, conn, bus),
                         new TechPackTab(this, conn),
@@ -116,8 +132,9 @@ public final class MainActivity extends Activity {
                         new UnlockTab(this, conn),
                         new MirrorTab(this, conn),
                         new ProjectionTab(this, conn),
+                        new AppsTab(this, conn),
                         new UpdateTab(this)});
-        tabs[6] = new SettingsTab(this, conn);
+        tabs[7] = new SettingsTab(this, conn);
 
         host = new FrameLayout(this);
         host.addView(buildRoot(), new FrameLayout.LayoutParams(
@@ -125,8 +142,8 @@ public final class MainActivity extends Activity {
         setContentView(host);
         // Open straight onto the network scan, which runs itself on show, so the
         // first thing after launch is the list of devices and which one to join.
-        ((GroupTab) tabs[4]).startAt(1);   // tabs[4] = Bluetooth group; sub 1 = Scan
-        selectTab(4);
+        ((GroupTab) tabs[5]).startAt(1);   // tabs[5] = Bluetooth group; sub 1 = Scan
+        selectTab(0);                      // land on the Home dashboard
 
         if (Lock.anySet(this)) {
             Lock.lockNow();
@@ -139,6 +156,67 @@ public final class MainActivity extends Activity {
             address.setText(saved);
         }
         applyMode(prefs.getString(KEY_MODE, MODE_AUTO), false);
+
+        autoConnect = prefs.getBoolean(KEY_AUTOCONNECT, false);
+        styleAutoChip();
+        scheduleAuto();
+    }
+
+    /** Toggle the "connect by itself when the scooter is reachable" feature. */
+    private void toggleAutoConnect() {
+        autoConnect = !autoConnect;
+        getSharedPreferences(PREFS, MODE_PRIVATE).edit()
+                .putBoolean(KEY_AUTOCONNECT, autoConnect).apply();
+        styleAutoChip();
+        scheduleAuto();
+        if (autoConnect) {
+            setStatus("Auto-connect on — I'll connect when the scooter comes online.", Ui.DIM);
+        }
+    }
+
+    private void styleAutoChip() {
+        if (autoChip != null) {
+            styleModeChip(autoChip, autoConnect);
+        }
+    }
+
+    private void scheduleAuto() {
+        autoHandler.removeCallbacks(autoPoll);
+        if (autoConnect) {
+            autoHandler.postDelayed(autoPoll, 1500);
+        }
+    }
+
+    /** Every few seconds while enabled: if the scooter's daemon answers and we
+     *  are not connected, connect. The reachability probe keeps offline polls
+     *  silent (no failed-connect flashes) until the scooter is actually up. */
+    private void autoTick() {
+        if (autoConnect && !conn.ready() && connectButton != null && connectButton.isEnabled()) {
+            final String addr = address.getText().toString().trim();
+            if (!addr.isEmpty() && Addr.isIpv4(addr)) {
+                new Thread(() -> {
+                    if (reachable(addr, 50005, 1500)) {
+                        runOnUiThread(() -> {
+                            if (autoConnect && !conn.ready() && connectButton.isEnabled()) {
+                                onConnectClicked();
+                            }
+                        });
+                    }
+                }, "auto-probe").start();
+            }
+        }
+        if (autoConnect) {
+            autoHandler.postDelayed(autoPoll, 6000);
+        }
+    }
+
+    private static boolean reachable(String ip, int port, int ms) {
+        try (java.net.Socket s = new java.net.Socket()) {
+            s.connect(new java.net.InetSocketAddress(ip, port), ms);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private long widgetsFedAt;
@@ -170,11 +248,13 @@ public final class MainActivity extends Activity {
         // Keep the shared cloud snapshot warm whenever a token is set, so data
         // tabs can fill empty fields even while the scooter is asleep.
         CloudState.get(this).start();
+        scheduleAuto();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        autoHandler.removeCallbacks(autoPoll);
         CloudState.get(this).stop();
         // Leaving for the home screen is when the widgets get looked at, so
         // hand them the newest reading and the current fleet size now.
@@ -381,6 +461,11 @@ public final class MainActivity extends Activity {
         Button savedButton = modeChip("\u2605 Saved", this::showSavedDialog);
         styleModeChip(savedButton, false);
         modeRow.addView(savedButton);
+        autoChip = modeChip("\u21bb Auto-connect", this::toggleAutoConnect);
+        LinearLayout.LayoutParams autoGap = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        autoGap.leftMargin = Ui.dp(this, 8);
+        modeRow.addView(autoChip, autoGap);
         modeScroll.addView(modeRow);
         connPanel.addView(modeScroll);
 
@@ -392,41 +477,40 @@ public final class MainActivity extends Activity {
 
         root.addView(header);
 
-        barScroll = new HorizontalScrollView(this);
-        barScroll.setHorizontalScrollBarEnabled(false);
-        barScroll.setBackgroundColor(Ui.BG);
-        LinearLayout bar = Ui.row(this);
-        bar.setPadding(Ui.dp(this, 4), 0, Ui.dp(this, 4), 0);
-        for (int i = 0; i < TAB_NAMES.length; i++) {
-            final int index = i;
-            Button b = new Button(this);
-            b.setText(TAB_NAMES[i]);
-            b.setAllCaps(false);
-            b.setTextSize(14);
-            b.setMinWidth(0);
-            b.setMinimumWidth(0);
-            b.setStateListAnimator(null);
-            b.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 8));
-            b.setBackgroundColor(Color.TRANSPARENT);
-            Ui.wire(b, v -> selectTab(index));
-            tabButtons[i] = b;
-            bar.addView(b, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT));
-        }
-        barScroll.addView(bar, new HorizontalScrollView.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-        root.addView(barScroll);
-
-        View divider = new View(this);
-        divider.setBackgroundColor(Ui.LINE);
-        root.addView(divider, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 1)));
-
         content = new FrameLayout(this);
         root.addView(content, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+
+        // Bottom navigation: icon + label per main tab, active one accented.
+        View navDivider = new View(this);
+        navDivider.setBackgroundColor(Ui.LINE);
+        root.addView(navDivider, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 1)));
+
+        LinearLayout nav = Ui.row(this);
+        nav.setBackgroundColor(Ui.BG);
+        nav.setPadding(Ui.dp(this, 6), Ui.dp(this, 6), Ui.dp(this, 6), Ui.dp(this, 8));
+        for (int i = 0; i < TAB_NAMES.length; i++) {
+            final int index = i;
+            LinearLayout item = Ui.column(this);
+            item.setGravity(android.view.Gravity.CENTER);
+            item.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 6));
+            TextView icon = Ui.text(this, TAB_ICONS[i], 17, Ui.DIM);
+            icon.setGravity(android.view.Gravity.CENTER);
+            TextView label = Ui.text(this, TAB_SHORT[i], 10, Ui.DIM);
+            label.setGravity(android.view.Gravity.CENTER);
+            label.setSingleLine(true);
+            label.setPadding(0, Ui.dp(this, 3), 0, 0);
+            item.addView(icon);
+            item.addView(label);
+            item.setOnClickListener(Ui.haptic(v -> selectTab(index)));
+            navItems[i] = item;
+            navIcons[i] = icon;
+            navLabels[i] = label;
+            nav.addView(item, new LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        }
+        root.addView(nav);
 
         return root;
     }
@@ -442,20 +526,17 @@ public final class MainActivity extends Activity {
         content.removeAllViews();
         content.addView(tabs[index].view(), new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        for (int i = 0; i < tabButtons.length; i++) {
-            tabButtons[i].setTextColor(i == index ? Ui.TEXT : Ui.DIM);
-            tabButtons[i].setTypeface(android.graphics.Typeface.create(
-                    i == index ? "sans-serif-medium" : "sans-serif",
+        for (int i = 0; i < navItems.length; i++) {
+            boolean on = i == index;
+            navIcons[i].setTextColor(on ? Ui.ACCENT : Ui.DIM);
+            navLabels[i].setTextColor(on ? Ui.ACCENT : Ui.DIM);
+            navLabels[i].setTypeface(android.graphics.Typeface.create(
+                    on ? "sans-serif-medium" : "sans-serif",
                     android.graphics.Typeface.NORMAL));
-            if (i == index) {
-                tabButtons[i].setBackground(Ui.underline(this, Ui.ACCENT));
-            } else {
-                tabButtons[i].setBackgroundColor(Color.TRANSPARENT);
-            }
+            navItems[i].setBackground(on
+                    ? Ui.round(this, Ui.alpha(Ui.ACCENT, 0x24), 16, 0)
+                    : null);
         }
-        final Button chosen = tabButtons[index];
-        barScroll.post(() -> barScroll.smoothScrollTo(
-                Math.max(0, chosen.getLeft() - Ui.dp(this, 24)), 0));
         tabs[index].onShow();
     }
 
@@ -844,8 +925,20 @@ public final class MainActivity extends Activity {
             return;
         }
         address.setText(addr.trim());
-        selectTab(1);
+        selectTab(0);
         onConnectClicked();
+    }
+
+    /** Jump to the mod installer (Tools → ADB) from the Home dashboard. */
+    public void openInstaller() {
+        ((GroupTab) tabs[6]).startAt(0);
+        selectTab(6);
+    }
+
+    /** Jump to live location (Cloud → Track) from the Home dashboard. */
+    public void openTrack() {
+        ((GroupTab) tabs[4]).startAt(2);
+        selectTab(4);
     }
 
     @Override
