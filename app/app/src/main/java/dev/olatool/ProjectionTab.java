@@ -45,6 +45,14 @@ public final class ProjectionTab implements Tab {
     private static final String BALL_RECV = BALL_PKG + "/.core.QuickBallCommandReceiver";
     private static final String BALL_LOCK_ACTION = BALL_PKG + ".action.SET_SCOOTER_LOCKED";
     private static final String BALL_ACT = BALL_PKG + "/.ui.MainActivity";
+    // The ball is drawn by an accessibility service. The lock/unlock broadcast
+    // only has something to toggle while this service is enabled and alive —
+    // MoveOS/Android-10 silently drops accessibility services across reboots and
+    // "optimize" sweeps, which is the usual reason lock/unlock quietly stops
+    // doing anything. enabled_accessibility_services uses the fully-qualified
+    // class name: package/package.Class.
+    private static final String BALL_SVC =
+            BALL_PKG + "/" + BALL_PKG + ".core.QuickBallService";
 
     private final MainActivity activity;
     private final Conn conn;
@@ -84,12 +92,20 @@ public final class ProjectionTab implements Tab {
         body.addView(Ui.note(activity,
                 "Back / Home / shortcut buttons that float on top of the dash — handy "
                         + "while CarPlay or Android Auto is full-screen. Lock hides the "
-                        + "floating button; Unlock brings it back."), topMargin(0));
+                        + "floating button; Unlock brings it back.\n\n"
+                        + "If lock/unlock does nothing, the ball's accessibility service was "
+                        + "switched off (common after a dash reboot). Tap \"Fix nav\" to turn "
+                        + "it back on, or \"Check nav\" to see its state."), topMargin(0));
         LinearLayout navRow = Ui.row(activity);
         navRow.addView(Ui.button(activity, "🔒 Lock (hide)", v -> navLock(true)), weight());
         navRow.addView(Ui.space(activity, 0), fixed(8));
         navRow.addView(Ui.button(activity, "🔓 Unlock (show)", v -> navLock(false)), weight());
         body.addView(navRow, topMargin(8));
+        LinearLayout navFixRow = Ui.row(activity);
+        navFixRow.addView(Ui.accent(activity, "🛠 Fix nav", v -> navFix()), weight());
+        navFixRow.addView(Ui.space(activity, 0), fixed(8));
+        navFixRow.addView(Ui.button(activity, "Check nav", v -> navCheck()), weight());
+        body.addView(navFixRow, topMargin(8));
         body.addView(Ui.button(activity, "Open nav settings", v -> openNav()), topMargin(8));
 
         // --- What the readiness check is telling you ------------------------
@@ -161,7 +177,14 @@ public final class ProjectionTab implements Tab {
                                 + "has no socket manager — see Check readiness."));
     }
 
-    /** Hide (lock=true) or show (lock=false) the dash's floating nav button. */
+    /**
+     * Hide (lock=true) or show (lock=false) the dash's floating nav button.
+     *
+     * <p>Probes the two preconditions in the same round-trip as the broadcast,
+     * so a no-op gets a real diagnosis instead of a blind "if nothing changed".
+     * The ball cannot exist unless its app is installed and its accessibility
+     * service is enabled; when either is missing the broadcast lands on nothing.
+     */
     private void navLock(boolean lock) {
         if (!Access.require(activity, Access.ADMIN)) {
             return;
@@ -170,23 +193,121 @@ public final class ProjectionTab implements Tab {
             status.setText("Connect to the scooter first.");
             return;
         }
-        // The floating-nav app's own command receiver re-broadcasts this to its
-        // service, which adds or removes the overlay window.
-        String cmd = "am broadcast -a " + BALL_LOCK_ACTION + " -n " + BALL_RECV
-                + " --ez locked " + lock;
+        // Read install + accessibility state, then fire the broadcast. The
+        // command receiver re-broadcasts to the service, which adds/removes the
+        // overlay window — but only while that service is alive.
+        String cmd = navProbe()
+                + "am broadcast -a " + BALL_LOCK_ACTION + " -n " + BALL_RECV
+                + " --ez locked " + lock + " >/dev/null 2>&1";
         conn.run(rpc -> rpc.shell(cmd, 10_000), (out, error) -> {
             if (error != null) {
                 status.setText("Failed: " + error.getMessage());
-            } else if (out != null && out.toLowerCase(java.util.Locale.ROOT)
-                    .contains("locked state set to " + lock)) {
+                return;
+            }
+            String problem = navProblem(out == null ? "" : out);
+            if (problem != null) {
+                status.setText((lock ? "Lock" : "Unlock") + " sent, but it will do nothing:\n"
+                        + problem);
+            } else {
                 status.setText(lock ? "Floating nav hidden (locked)."
                         : "Floating nav shown (unlocked).");
-            } else {
-                status.setText((lock ? "Lock" : "Unlock") + " sent. If nothing changed, install "
-                        + "the floating-nav app (Root shell → Pick & install APK) and enable its "
-                        + "accessibility service first.\n" + (out == null ? "" : out.trim()));
             }
         });
+    }
+
+    /** Read-only state check for the floating nav, with a plain verdict. */
+    private void navCheck() {
+        if (!conn.ready()) {
+            status.setText("Connect to the scooter first.");
+            return;
+        }
+        status.setText("Checking floating nav…");
+        conn.run(rpc -> rpc.shell(navProbe() + "true", 10_000), (out, error) -> {
+            if (error != null) {
+                status.setText("Check failed: " + error.getMessage());
+                return;
+            }
+            String probe = out == null ? "" : out;
+            String problem = navProblem(probe);
+            if (problem != null) {
+                status.setText("Floating nav is NOT ready:\n" + problem);
+            } else {
+                status.setText("Floating nav is ready: app installed and its accessibility "
+                        + "service is enabled. Lock/Unlock will work.");
+            }
+        });
+    }
+
+    /**
+     * Re-enable the ball's accessibility service from root, the fix for the most
+     * common failure (service dropped after a dash reboot). Appends the service
+     * to enabled_accessibility_services only if absent, flips the master
+     * accessibility switch on, then opens the app so the overlay redraws.
+     */
+    private void navFix() {
+        if (!Access.require(activity, Access.ADMIN)) {
+            return;
+        }
+        if (!conn.ready()) {
+            status.setText("Connect to the scooter first.");
+            return;
+        }
+        status.setText("Re-enabling floating nav…");
+        // One shell line: bail if not installed, else add the service when
+        // missing and turn accessibility on, then relaunch the app.
+        String cmd =
+                "if [ \"$(pm list packages " + BALL_PKG + " | grep -c " + BALL_PKG + ")\" = 0 ]; "
+                        + "then echo RESULT=NOT_INSTALLED; else "
+                        + "C=$(settings get secure enabled_accessibility_services); "
+                        + "if echo \"$C\" | grep -q " + BALL_SVC + "; then echo RESULT=ALREADY; "
+                        + "else if [ \"$C\" = null ] || [ -z \"$C\" ]; then N=" + BALL_SVC + "; "
+                        + "else N=$C:" + BALL_SVC + "; fi; "
+                        + "settings put secure enabled_accessibility_services \"$N\"; "
+                        + "echo RESULT=ENABLED; fi; "
+                        + "settings put secure accessibility_enabled 1; "
+                        + "am start -n " + BALL_ACT + " >/dev/null 2>&1; fi";
+        conn.run(rpc -> rpc.shell(cmd, 12_000), (out, error) -> {
+            if (error != null) {
+                status.setText("Fix failed: " + error.getMessage());
+                return;
+            }
+            String r = val(out == null ? "" : out, "RESULT");
+            if ("NOT_INSTALLED".equals(r)) {
+                status.setText("S1 Nav app is not installed.\nInstall Pegasus-S1Nav.apk from "
+                        + "Root shell → \"Pick & install APK\" first.");
+            } else if ("ALREADY".equals(r)) {
+                status.setText("Accessibility service was already on. Reopened S1 Nav so the "
+                        + "ball redraws — if it still won't show, tap Unlock.");
+            } else if ("ENABLED".equals(r)) {
+                status.setText("Fixed: turned the ball's accessibility service back on and "
+                        + "reopened S1 Nav. Lock/Unlock should work now.");
+            } else {
+                status.setText("Fix ran but returned no status.\n" + (out == null ? "" : out.trim()));
+            }
+        });
+    }
+
+    /** Shell prelude that emits INST= and ACC= lines for {@link #navProblem}. */
+    private static String navProbe() {
+        return "echo INST=$(pm list packages " + BALL_PKG + " | grep -c " + BALL_PKG + "); "
+                + "echo ACC=$(settings get secure enabled_accessibility_services); ";
+    }
+
+    /**
+     * Turn an {@link #navProbe} result into a one-line problem, or null when the
+     * nav is ready to toggle.
+     */
+    private static String navProblem(String out) {
+        if (!"1".equals(val(out, "INST"))) {
+            return "S1 Nav app is not installed — install Pegasus-S1Nav.apk from "
+                    + "Root shell → \"Pick & install APK\".";
+        }
+        String acc = val(out, "ACC");
+        if (!acc.contains(BALL_SVC)) {
+            return "S1 Nav is installed, but its accessibility service is OFF, so there is no "
+                    + "overlay to show or hide. Tap \"🛠 Fix nav\" to turn it back on.";
+        }
+        return null;
     }
 
     /** Open the floating-nav app's own settings on the dash, to pick shortcuts. */
